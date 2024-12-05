@@ -10,15 +10,12 @@ from pydantic import BaseModel, Field, model_validator
 from scrapegraph_py import Client
 
 
-class SmartScraperInput(BaseModel):
-    user_prompt: str = Field(
-        description="Prompt describing what to extract from the webpage and how to structure the output"
-    )
-    website_url: str = Field(description="Url of the webpage to extract data from")
+class MarkdownifyInput(BaseModel):
+    website_url: str = Field(description="Url of the website to convert to Markdown")
 
 
-class SmartScraperTool(BaseTool):
-    """Tool for extracting structured data from websites using ScrapeGraph AI.
+class MarkdownifyTool(BaseTool):
+    """Tool for converting webpages to Markdown format using ScrapeGraph AI.
 
     Setup:
         Install ``langchain-scrapegraph`` python package:
@@ -41,42 +38,39 @@ class SmartScraperTool(BaseTool):
     Instantiate:
         .. code-block:: python
 
-            from langchain_scrapegraph.tools import SmartScraperTool
+            from langchain_scrapegraph.tools import MarkdownifyTool
 
             # Will automatically get SGAI_API_KEY from environment
-            tool = SmartScraperTool()
+            tool = MarkdownifyTool()
 
             # Or provide API key directly
-            tool = SmartScraperTool(api_key="your-api-key")
+            tool = MarkdownifyTool(api_key="your-api-key")
 
     Use the tool:
         .. code-block:: python
 
             result = tool.invoke({
-                "user_prompt": "Extract the main heading and first paragraph",
                 "website_url": "https://example.com"
             })
 
             print(result)
-            # {
-            #     "main_heading": "Example Domain",
-            #     "first_paragraph": "This domain is for use in illustrative examples..."
-            # }
+            # # Example Domain
+            #
+            # This domain is for use in illustrative examples...
 
     Async usage:
         .. code-block:: python
 
             result = await tool.ainvoke({
-                "user_prompt": "Extract the main heading",
                 "website_url": "https://example.com"
             })
     """
 
-    name: str = "SmartScraper"
+    name: str = "Markdownify"
     description: str = (
-        "Useful when you need to extract structured data from a webpage, applying also some reasoning using LLM, by providing a webpage URL and an extraction prompt"
+        "Useful when you need to convert a webpage to Markdown, given a URL as input"
     )
-    args_schema: Type[BaseModel] = SmartScraperInput
+    args_schema: Type[BaseModel] = MarkdownifyInput
     return_direct: bool = True
     client: Optional[Client] = None
     api_key: str
@@ -94,28 +88,22 @@ class SmartScraperTool(BaseTool):
 
     def _run(
         self,
-        user_prompt: str,
         website_url: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict:
         """Use the tool to extract data from a website."""
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.smartscraper(
-            website_url=website_url,
-            user_prompt=user_prompt,
-        )
+        response = self.client.markdownify(website_url=website_url)
         return response["result"]
 
     async def _arun(
         self,
-        user_prompt: str,
         website_url: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
         return self._run(
-            user_prompt,
             website_url,
             run_manager=run_manager.get_sync() if run_manager else None,
         )
