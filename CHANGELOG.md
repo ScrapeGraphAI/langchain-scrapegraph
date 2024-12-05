@@ -1,3 +1,15 @@
+## [1.1.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.0.0...v1.1.0-beta.1) (2024-12-05)
+
+
+### Features
+
+* added markdownify and localscraper tools ([03e49dc](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/03e49dce84ef5a1b7a59b6dfd046eb563c14d283))
+
+
+### CI
+
+* **release:** 1.0.0-beta.1 [skip ci] ([fc06960](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/fc06960340c68ff325656074d47b0b793a3b25fe))
+
 ## 1.0.0 (2024-12-05)
 
 ## 1.0.0-beta.1 (2024-12-05)
