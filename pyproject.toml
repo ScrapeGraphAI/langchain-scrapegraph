@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain-scrapegraph"
-version = "1.0.0b1"
+version = "1.1.0"
 description = "Library for extracting structured data from websites using ScrapeGraphAI"
 authors = ["Marco Perini <marco.perini@scrapegraphai.com>", "Marco Vinciguerra <marco.vinciguerra@scrapegraphai.com>", "Lorenzo Padoan <lorenzo.padoan@scrapegraphai.com>"]
 license = "MIT"
