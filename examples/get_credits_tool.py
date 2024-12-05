@@ -1,9 +1,13 @@
+from scrapegraph_py.logger import sgai_logger
+
 from langchain_scrapegraph.tools import GetCreditsTool
 
-# Will automatically get SGAI_API_KEY from environment, or set it manually
-tool = GetCreditsTool()
-credits = tool.run()
+sgai_logger.set_logging(level="INFO")
 
-print("\nCredits Information:")
-print(f"Remaining Credits: {credits['remaining_credits']}")
-print(f"Total Credits Used: {credits['total_credits_used']}")
+# Will automatically get SGAI_API_KEY from environment
+tool = GetCreditsTool()
+
+# Use the tool
+credits = tool.invoke({})
+
+print(credits)

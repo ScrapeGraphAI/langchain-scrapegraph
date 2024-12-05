@@ -10,15 +10,15 @@ from pydantic import BaseModel, Field, model_validator
 from scrapegraph_py import Client
 
 
-class SmartScraperInput(BaseModel):
+class LocalscraperInput(BaseModel):
     user_prompt: str = Field(
         description="Prompt describing what to extract from the webpage and how to structure the output"
     )
-    website_url: str = Field(description="Url of the webpage to extract data from")
+    website_html: str = Field(description="HTML of the webpage to extract data from")
 
 
-class SmartScraperTool(BaseTool):
-    """Tool for extracting structured data from websites using ScrapeGraph AI.
+class LocalScraperTool(BaseTool):
+    """Tool for extracting structured data from a local HTML file using ScrapeGraph AI.
 
     Setup:
         Install ``langchain-scrapegraph`` python package:
@@ -41,42 +41,58 @@ class SmartScraperTool(BaseTool):
     Instantiate:
         .. code-block:: python
 
-            from langchain_scrapegraph.tools import SmartScraperTool
+            from langchain_scrapegraph.tools import LocalScraperTool
 
             # Will automatically get SGAI_API_KEY from environment
-            tool = SmartScraperTool()
+            tool = LocalScraperTool()
 
             # Or provide API key directly
-            tool = SmartScraperTool(api_key="your-api-key")
+            tool = LocalScraperTool(api_key="your-api-key")
 
     Use the tool:
         .. code-block:: python
 
+            html_content = '''
+            <html>
+                <body>
+                    <h1>Company Name</h1>
+                    <p>We are a technology company focused on AI solutions.</p>
+                    <div class="contact">
+                        <p>Email: contact@example.com</p>
+                        <p>Phone: (555) 123-4567</p>
+                    </div>
+                </body>
+            </html>
+            '''
+
             result = tool.invoke({
-                "user_prompt": "Extract the main heading and first paragraph",
-                "website_url": "https://example.com"
+                "user_prompt": "Extract company description and contact info",
+                "website_html": html_content
             })
 
             print(result)
             # {
-            #     "main_heading": "Example Domain",
-            #     "first_paragraph": "This domain is for use in illustrative examples..."
+            #     "description": "We are a technology company focused on AI solutions",
+            #     "contact": {
+            #         "email": "contact@example.com",
+            #         "phone": "(555) 123-4567"
+            #     }
             # }
 
     Async usage:
         .. code-block:: python
 
             result = await tool.ainvoke({
-                "user_prompt": "Extract the main heading",
-                "website_url": "https://example.com"
+                "user_prompt": "Extract contact information",
+                "website_html": html_content
             })
     """
 
-    name: str = "SmartScraper"
+    name: str = "LocalScraper"
     description: str = (
-        "Useful when you need to extract structured data from a webpage, applying also some reasoning using LLM, by providing a webpage URL and an extraction prompt"
+        "Useful when you need to extract structured data from a HTML webpage, applying also some reasoning using LLM, by providing an HTML string and an extraction prompt"
     )
-    args_schema: Type[BaseModel] = SmartScraperInput
+    args_schema: Type[BaseModel] = LocalscraperInput
     return_direct: bool = True
     client: Optional[Client] = None
     api_key: str
@@ -95,14 +111,14 @@ class SmartScraperTool(BaseTool):
     def _run(
         self,
         user_prompt: str,
-        website_url: str,
+        website_html: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict:
         """Use the tool to extract data from a website."""
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.smartscraper(
-            website_url=website_url,
+        response = self.client.localscraper(
+            website_html=website_html,
             user_prompt=user_prompt,
         )
         return response["result"]
@@ -110,12 +126,12 @@ class SmartScraperTool(BaseTool):
     async def _arun(
         self,
         user_prompt: str,
-        website_url: str,
+        website_html: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
         return self._run(
             user_prompt,
-            website_url,
+            website_html,
             run_manager=run_manager.get_sync() if run_manager else None,
         )
