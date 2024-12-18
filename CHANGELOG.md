@@ -1,3 +1,4 @@
+
 ## [1.1.0-beta.2](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2024-12-18)
 
 
@@ -6,6 +7,8 @@
 * added pydantic output schema 🔍 ([34b5f10](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/34b5f1089059daa25c756b44da593a7c0db97aa9))
 
 ## [1.1.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.0.0...v1.1.0-beta.1) (2024-12-05)
+
+## [1.1.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.0.0...v1.1.0) (2024-12-05)
 
 
 ### Features
