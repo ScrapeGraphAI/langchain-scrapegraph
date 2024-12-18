@@ -37,6 +37,8 @@ class SmartScraperTool(BaseTool):
     Key init args:
         api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
         client: Optional pre-configured ScrapeGraph client instance.
+        llm_output_schema: Optional Pydantic model or dictionary schema to structure the output.
+                      If provided, the tool will ensure the output conforms to this schema.
 
     Instantiate:
         .. code-block:: python
@@ -49,6 +51,15 @@ class SmartScraperTool(BaseTool):
             # Or provide API key directly
             tool = SmartScraperTool(api_key="your-api-key")
 
+            # Optionally, you can provide an output schema:
+            from pydantic import BaseModel, Field
+
+            class WebsiteInfo(BaseModel):
+                title: str = Field(description="The main title")
+                description: str = Field(description="The main description")
+
+            tool_with_schema = SmartScraperTool(llm_output_schema=WebsiteInfo)
+
     Use the tool:
         .. code-block:: python
 
@@ -58,9 +69,16 @@ class SmartScraperTool(BaseTool):
             })
 
             print(result)
+            # Without schema:
             # {
             #     "main_heading": "Example Domain",
             #     "first_paragraph": "This domain is for use in illustrative examples..."
+            # }
+            #
+            # With WebsiteInfo schema:
+            # {
+            #     "title": "Example Domain",
+            #     "description": "This domain is for use in illustrative examples..."
             # }
 
     Async usage:
@@ -80,6 +98,7 @@ class SmartScraperTool(BaseTool):
     return_direct: bool = True
     client: Optional[Client] = None
     api_key: str
+    llm_output_schema: Optional[Type[BaseModel]] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -101,10 +120,23 @@ class SmartScraperTool(BaseTool):
         """Use the tool to extract data from a website."""
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.smartscraper(
-            website_url=website_url,
-            user_prompt=user_prompt,
-        )
+
+        if self.llm_output_schema is None:
+            response = self.client.smartscraper(
+                website_url=website_url,
+                user_prompt=user_prompt,
+            )
+        elif isinstance(self.llm_output_schema, type) and issubclass(
+            self.llm_output_schema, BaseModel
+        ):
+            response = self.client.smartscraper(
+                website_url=website_url,
+                user_prompt=user_prompt,
+                output_schema=self.llm_output_schema,
+            )
+        else:
+            raise ValueError("llm_output_schema must be a Pydantic model class")
+
         return response["result"]
 
     async def _arun(

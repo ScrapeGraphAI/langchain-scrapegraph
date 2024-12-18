@@ -44,6 +44,39 @@ result = tool.invoke({
 print(result)
 ```
 
+<details>
+<summary>🔍 Using Output Schemas with SmartscraperTool</summary>
+
+You can define the structure of the output using Pydantic models:
+
+```python
+from typing import List
+from pydantic import BaseModel, Field
+from langchain_scrapegraph.tools import SmartscraperTool
+
+class WebsiteInfo(BaseModel):
+    title: str = Field(description="The main title of the webpage")
+    description: str = Field(description="The main description or first paragraph")
+    urls: List[str] = Field(description="The URLs inside the webpage")
+
+# Initialize with schema
+tool = SmartscraperTool(llm_output_schema=WebsiteInfo)
+
+# The output will conform to the WebsiteInfo schema
+result = tool.invoke({
+    "website_url": "https://www.example.com",
+    "user_prompt": "Extract the website information"
+})
+
+print(result)
+# {
+#     "title": "Example Domain",
+#     "description": "This domain is for use in illustrative examples...",
+#     "urls": ["https://www.iana.org/domains/example"]
+# }
+```
+</details>
+
 ### 💻 LocalscraperTool
 Extract information from HTML content using AI.
 
@@ -58,6 +91,54 @@ result = tool.invoke({
 
 print(result)
 ```
+
+<details>
+<summary>🔍 Using Output Schemas with LocalscraperTool</summary>
+
+You can define the structure of the output using Pydantic models:
+
+```python
+from typing import Optional
+from pydantic import BaseModel, Field
+from langchain_scrapegraph.tools import LocalscraperTool
+
+class CompanyInfo(BaseModel):
+    name: str = Field(description="The company name")
+    description: str = Field(description="The company description")
+    email: Optional[str] = Field(description="Contact email if available")
+    phone: Optional[str] = Field(description="Contact phone if available")
+
+# Initialize with schema
+tool = LocalscraperTool(llm_output_schema=CompanyInfo)
+
+html_content = """
+<html>
+    <body>
+        <h1>TechCorp Solutions</h1>
+        <p>We are a leading AI technology company.</p>
+        <div class="contact">
+            <p>Email: contact@techcorp.com</p>
+            <p>Phone: (555) 123-4567</p>
+        </div>
+    </body>
+</html>
+"""
+
+# The output will conform to the CompanyInfo schema
+result = tool.invoke({
+    "website_html": html_content,
+    "user_prompt": "Extract the company information"
+})
+
+print(result)
+# {
+#     "name": "TechCorp Solutions",
+#     "description": "We are a leading AI technology company.",
+#     "email": "contact@techcorp.com",
+#     "phone": "(555) 123-4567"
+# }
+```
+</details>
 
 ## 🌟 Key Features
 
