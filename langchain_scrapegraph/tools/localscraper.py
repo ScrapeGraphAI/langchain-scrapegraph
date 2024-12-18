@@ -37,6 +37,8 @@ class LocalScraperTool(BaseTool):
     Key init args:
         api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
         client: Optional pre-configured ScrapeGraph client instance.
+        llm_output_schema: Optional Pydantic model or dictionary schema to structure the output.
+                      If provided, the tool will ensure the output conforms to this schema.
 
     Instantiate:
         .. code-block:: python
@@ -48,6 +50,16 @@ class LocalScraperTool(BaseTool):
 
             # Or provide API key directly
             tool = LocalScraperTool(api_key="your-api-key")
+
+            # Optionally, you can provide an output schema:
+            from pydantic import BaseModel, Field
+
+            class CompanyInfo(BaseModel):
+                name: str = Field(description="Company name")
+                description: str = Field(description="Company description")
+                email: str = Field(description="Contact email")
+
+            tool_with_schema = LocalScraperTool(llm_output_schema=CompanyInfo)
 
     Use the tool:
         .. code-block:: python
@@ -71,6 +83,7 @@ class LocalScraperTool(BaseTool):
             })
 
             print(result)
+            # Without schema:
             # {
             #     "description": "We are a technology company focused on AI solutions",
             #     "contact": {
@@ -78,14 +91,13 @@ class LocalScraperTool(BaseTool):
             #         "phone": "(555) 123-4567"
             #     }
             # }
-
-    Async usage:
-        .. code-block:: python
-
-            result = await tool.ainvoke({
-                "user_prompt": "Extract contact information",
-                "website_html": html_content
-            })
+            #
+            # With CompanyInfo schema:
+            # {
+            #     "name": "Company Name",
+            #     "description": "We are a technology company focused on AI solutions",
+            #     "email": "contact@example.com"
+            # }
     """
 
     name: str = "LocalScraper"
@@ -96,6 +108,7 @@ class LocalScraperTool(BaseTool):
     return_direct: bool = True
     client: Optional[Client] = None
     api_key: str
+    llm_output_schema: Optional[Type[BaseModel]] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -117,10 +130,23 @@ class LocalScraperTool(BaseTool):
         """Use the tool to extract data from a website."""
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.localscraper(
-            website_html=website_html,
-            user_prompt=user_prompt,
-        )
+
+        if self.llm_output_schema is None:
+            response = self.client.localscraper(
+                website_html=website_html,
+                user_prompt=user_prompt,
+            )
+        elif isinstance(self.llm_output_schema, type) and issubclass(
+            self.llm_output_schema, BaseModel
+        ):
+            response = self.client.localscraper(
+                website_html=website_html,
+                user_prompt=user_prompt,
+                output_schema=self.llm_output_schema,
+            )
+        else:
+            raise ValueError("llm_output_schema must be a Pydantic model class")
+
         return response["result"]
 
     async def _arun(

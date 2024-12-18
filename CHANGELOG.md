@@ -1,3 +1,30 @@
+## [1.2.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.1.0...v1.2.0-beta.1) (2024-12-18)
+
+
+### Features
+
+* added pydantic output schema 🔍 ([34b5f10](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/34b5f1089059daa25c756b44da593a7c0db97aa9))
+
+
+### Docs
+
+* added API reference ([d3ce047](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/d3ce0470f5c89da910540e42d71afdddd80e8c15))
+
+
+### CI
+
+* **release:** 1.1.0-beta.1 [skip ci] ([6222a16](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/6222a16a2fec477e7a6e610e0fdd4960e7ccd1b5))
+* **release:** 1.1.0-beta.2 [skip ci] ([d5dae57](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/d5dae575921cfa14daa4ceb887b0d7d037d3773d))
+
+## [1.1.0-beta.2](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2024-12-18)
+
+
+### Features
+
+* added pydantic output schema 🔍 ([34b5f10](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/34b5f1089059daa25c756b44da593a7c0db97aa9))
+
+## [1.1.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.0.0...v1.1.0-beta.1) (2024-12-05)
+
 ## [1.1.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.0.0...v1.1.0) (2024-12-05)
 
 
