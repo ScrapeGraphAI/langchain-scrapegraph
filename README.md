@@ -44,7 +44,7 @@ print(markdown)
 Extract structured data from any webpage using natural language prompts.
 
 ```python
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SmartScraperTool
 
 # Initialize the tool (uses SGAI_API_KEY from environment)
 tool = SmartscraperTool()
@@ -66,7 +66,7 @@ You can define the structure of the output using Pydantic models:
 ```python
 from typing import List
 from pydantic import BaseModel, Field
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SmartScraperTool
 
 class WebsiteInfo(BaseModel):
     title: str = Field(description="The main title of the webpage")
@@ -74,7 +74,7 @@ class WebsiteInfo(BaseModel):
     urls: List[str] = Field(description="The URLs inside the webpage")
 
 # Initialize with schema
-tool = SmartscraperTool(llm_output_schema=WebsiteInfo)
+tool = SmartScraperTool(llm_output_schema=WebsiteInfo)
 
 # The output will conform to the WebsiteInfo schema
 result = tool.invoke({
@@ -95,9 +95,9 @@ print(result)
 Extract information from HTML content using AI.
 
 ```python
-from langchain_scrapegraph.tools import LocalscraperTool
+from langchain_scrapegraph.tools import LocalScraperTool
 
-tool = LocalscraperTool()
+tool = LocalScraperTool()
 result = tool.invoke({
     "user_prompt": "Extract all contact information",
     "website_html": "<html>...</html>"
@@ -114,7 +114,7 @@ You can define the structure of the output using Pydantic models:
 ```python
 from typing import Optional
 from pydantic import BaseModel, Field
-from langchain_scrapegraph.tools import LocalscraperTool
+from langchain_scrapegraph.tools import LocalScraperTool
 
 class CompanyInfo(BaseModel):
     name: str = Field(description="The company name")
@@ -123,7 +123,7 @@ class CompanyInfo(BaseModel):
     phone: Optional[str] = Field(description="Contact phone if available")
 
 # Initialize with schema
-tool = LocalscraperTool(llm_output_schema=CompanyInfo)
+tool = LocalScraperTool(llm_output_schema=CompanyInfo)
 
 html_content = """
 <html>
@@ -173,12 +173,12 @@ print(result)
 
 ```python
 from langchain.agents import initialize_agent, AgentType
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SmartScraperTool
 from langchain_openai import ChatOpenAI
 
 # Initialize tools
 tools = [
-    SmartscraperTool(),
+    SmartScraperTool(),
 ]
 
 # Create an agent
