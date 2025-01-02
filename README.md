@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Support](https://img.shields.io/pypi/pyversions/langchain-scrapegraph.svg)](https://pypi.org/project/langchain-scrapegraph/)
-[![Documentation](https://img.shields.io/badge/Documentation-Latest-green)](https://scrapegraphai.com/docs)
+[![Documentation](https://img.shields.io/badge/Documentation-Latest-green)](https://docs.scrapegraphai.com/integrations/langchain)
 
 Supercharge your LangChain agents with AI-powered web scraping capabilities. LangChain-ScrapeGraph provides a seamless integration between [LangChain](https://github.com/langchain-ai/langchain) and [ScrapeGraph AI](https://scrapegraphai.com), enabling your agents to extract structured data from websites using natural language.
 
