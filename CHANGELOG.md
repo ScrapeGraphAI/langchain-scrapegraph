@@ -1,3 +1,10 @@
+## [1.2.1-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.0...v1.2.1-beta.1) (2025-01-02)
+
+
+### Bug Fixes
+
+* updated docs url ([f7b640c](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/f7b640c29d9780a30212acb19b09247b765a41ff))
+
 ## [1.2.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.1.0...v1.2.0) (2024-12-18)
 
 
