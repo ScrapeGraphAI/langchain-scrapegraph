@@ -1,3 +1,29 @@
+## [1.3.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.0...v1.3.0) (2025-02-22)
+
+
+### Features
+
+* searchscraper ([6a96801](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/6a968015d9c8f4ce798111850b0f000c3317c467))
+* updated tests searchscraper ([a771564](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/a771564838b637f6aef0277e5ca3d723208d6701))
+
+
+### Bug Fixes
+
+* updated docs url ([f7b640c](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/f7b640c29d9780a30212acb19b09247b765a41ff))
+
+
+### Docs
+
+* added cookbook reference ([23c912c](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/23c912c83e2090fc4383cadd946f6cbf0eb93319))
+* fixed link ([c224f56](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/c224f564848f4c7e8a1c9ba559ef8c4b316c1ce8))
+* fixed typo ([80a5448](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/80a5448e0df7449b2a87d35b02989eee4f747220))
+
+
+### CI
+
+* **release:** 1.2.1-beta.1 [skip ci] ([8c039e5](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/8c039e54a1f29d6046f4a1bfa7cb271acd39471f))
+* **release:** 1.3.0-beta.1 [skip ci] ([2c197e3](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/2c197e3a41fb88012acf456d1c2a9a477d3fb77d))
+
 ## [1.3.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.1-beta.1...v1.3.0-beta.1) (2025-02-22)
 
 
