@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -115,6 +115,7 @@ class MockSearchScraperTool(BaseTool):
     args_schema: type[BaseModel] = MockSearchScraperInput
     client: Optional[MockClient] = None
     api_key: str
+    llm_output_schema: Optional[Type[BaseModel]] = None
 
     def _run(self, **kwargs: Any) -> Dict:
         return {

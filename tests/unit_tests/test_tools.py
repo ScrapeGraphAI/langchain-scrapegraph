@@ -35,19 +35,22 @@ class TestSmartScraperToolUnit(ToolsUnitTests):
             "website_url": "https://example.com",
         }
 
+
+class TestSmartScraperToolCustom:
     def test_invoke_with_html(self):
         """Test invoking the tool with HTML content."""
-        tool = self.tool_constructor(**self.tool_constructor_params)
-        result = tool.invoke(
-            {
-                "user_prompt": "Extract the main heading",
-                "website_url": "https://example.com",
-                "website_html": "<html><body><h1>Test</h1></body></html>",
-            }
-        )
-        assert isinstance(result, dict)
-        assert "main_heading" in result
-        assert result["main_heading"] == "Test"
+        with patch("langchain_scrapegraph.tools.smartscraper.Client", MockClient):
+            tool = MockSmartScraperTool(api_key="sgai-test-api-key")
+            result = tool.invoke(
+                {
+                    "user_prompt": "Extract the main heading",
+                    "website_url": "https://example.com",
+                    "website_html": "<html><body><h1>Test</h1></body></html>",
+                }
+            )
+            assert isinstance(result, dict)
+            assert "main_heading" in result
+            assert result["main_heading"] == "Test"
 
 
 class TestSearchScraperToolUnit(ToolsUnitTests):
@@ -66,6 +69,8 @@ class TestSearchScraperToolUnit(ToolsUnitTests):
             "user_prompt": "What are the key features of Product X?",
         }
 
+
+class TestSearchScraperToolCustom:
     def test_invoke_with_schema(self):
         """Test invoking the tool with a schema."""
         from typing import List
@@ -77,14 +82,17 @@ class TestSearchScraperToolUnit(ToolsUnitTests):
             features: List[dict] = Field(description="List of features")
             reference_urls: List[str] = Field(description="Reference URLs")
 
-        tool = self.tool_constructor(**self.tool_constructor_params)
-        tool.llm_output_schema = TestSchema
-        result = tool.invoke(self.tool_invoke_params_example)
-        assert isinstance(result, dict)
-        assert "product" in result
-        assert "features" in result
-        assert "reference_urls" in result
-        assert isinstance(result["reference_urls"], list)
+        with patch("langchain_scrapegraph.tools.searchscraper.Client", MockClient):
+            tool = MockSearchScraperTool(api_key="sgai-test-api-key")
+            tool.llm_output_schema = TestSchema
+            result = tool.invoke(
+                {"user_prompt": "What are the key features of Product X?"}
+            )
+            assert isinstance(result, dict)
+            assert "product" in result
+            assert "features" in result
+            assert "reference_urls" in result
+            assert isinstance(result["reference_urls"], list)
 
 
 class TestGetCreditsToolUnit(ToolsUnitTests):
