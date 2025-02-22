@@ -15,6 +15,10 @@ class SmartScraperInput(BaseModel):
         description="Prompt describing what to extract from the webpage and how to structure the output"
     )
     website_url: str = Field(description="Url of the webpage to extract data from")
+    website_html: Optional[str] = Field(
+        default=None,
+        description="Optional HTML content to process instead of fetching from website_url",
+    )
 
 
 class SmartScraperTool(BaseTool):
@@ -63,9 +67,25 @@ class SmartScraperTool(BaseTool):
     Use the tool:
         .. code-block:: python
 
+            # Using website URL
             result = tool.invoke({
                 "user_prompt": "Extract the main heading and first paragraph",
                 "website_url": "https://example.com"
+            })
+
+            # Using HTML content directly
+            html_content = '''
+            <html>
+                <body>
+                    <h1>Example Domain</h1>
+                    <p>This domain is for use in illustrative examples...</p>
+                </body>
+            </html>
+            '''
+            result = tool.invoke({
+                "user_prompt": "Extract the main heading and first paragraph",
+                "website_url": "https://example.com",
+                "website_html": html_content  # This will override website_url
             })
 
             print(result)
@@ -115,6 +135,7 @@ class SmartScraperTool(BaseTool):
         self,
         user_prompt: str,
         website_url: str,
+        website_html: Optional[str] = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict:
         """Use the tool to extract data from a website."""
@@ -125,6 +146,7 @@ class SmartScraperTool(BaseTool):
             response = self.client.smartscraper(
                 website_url=website_url,
                 user_prompt=user_prompt,
+                website_html=website_html,
             )
         elif isinstance(self.llm_output_schema, type) and issubclass(
             self.llm_output_schema, BaseModel
@@ -132,6 +154,7 @@ class SmartScraperTool(BaseTool):
             response = self.client.smartscraper(
                 website_url=website_url,
                 user_prompt=user_prompt,
+                website_html=website_html,
                 output_schema=self.llm_output_schema,
             )
         else:
@@ -143,11 +166,13 @@ class SmartScraperTool(BaseTool):
         self,
         user_prompt: str,
         website_url: str,
+        website_html: Optional[str] = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
         return self._run(
             user_prompt,
             website_url,
+            website_html=website_html,
             run_manager=run_manager.get_sync() if run_manager else None,
         )

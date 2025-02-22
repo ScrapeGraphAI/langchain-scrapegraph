@@ -1,3 +1,18 @@
+## [1.3.0-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.1-beta.1...v1.3.0-beta.1) (2025-02-22)
+
+
+### Features
+
+* searchscraper ([6a96801](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/6a968015d9c8f4ce798111850b0f000c3317c467))
+* updated tests searchscraper ([a771564](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/a771564838b637f6aef0277e5ca3d723208d6701))
+
+## [1.2.1-beta.1](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.0...v1.2.1-beta.1) (2025-01-02)
+
+
+### Bug Fixes
+
+* updated docs url ([f7b640c](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/f7b640c29d9780a30212acb19b09247b765a41ff))
+
 ## [1.2.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.1.0...v1.2.0) (2024-12-18)
 
 

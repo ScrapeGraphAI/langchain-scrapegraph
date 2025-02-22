@@ -17,10 +17,31 @@ sgai_logger.set_logging(level="INFO")
 # Initialize with Pydantic model class
 tool = SmartScraperTool(llm_output_schema=WebsiteInfo)
 
-# Example website and prompt
+# Example 1: Using website URL
 website_url = "https://www.example.com"
 user_prompt = "Extract info about the website"
 
-# Use the tool - output will conform to WebsiteInfo schema
-result = tool.invoke({"website_url": website_url, "user_prompt": user_prompt})
-print(result)
+# Use the tool with URL
+result_url = tool.invoke({"website_url": website_url, "user_prompt": user_prompt})
+print("\nResult from URL:", result_url)
+
+# Example 2: Using HTML content directly
+html_content = """
+<html>
+    <body>
+        <h1>Example Domain</h1>
+        <p>This domain is for use in illustrative examples.</p>
+        <a href="https://www.iana.org/domains/example">More information...</a>
+    </body>
+</html>
+"""
+
+# Use the tool with HTML content
+result_html = tool.invoke(
+    {
+        "website_url": website_url,  # Still required but will be overridden
+        "website_html": html_content,
+        "user_prompt": user_prompt,
+    }
+)
+print("\nResult from HTML:", result_html)
