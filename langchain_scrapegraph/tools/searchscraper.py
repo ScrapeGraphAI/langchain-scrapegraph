@@ -10,15 +10,14 @@ from pydantic import BaseModel, Field, model_validator
 from scrapegraph_py import Client
 
 
-class LocalscraperInput(BaseModel):
+class SearchScraperInput(BaseModel):
     user_prompt: str = Field(
-        description="Prompt describing what to extract from the webpage and how to structure the output"
+        description="Prompt describing what information to search for and extract from the web"
     )
-    website_html: str = Field(description="HTML of the webpage to extract data from")
 
 
-class LocalScraperTool(BaseTool):
-    """Tool for extracting structured data from a local HTML file using ScrapeGraph AI.
+class SearchScraperTool(BaseTool):
+    """Tool for searching and extracting structured data from the web using ScrapeGraph AI.
 
     Setup:
         Install ``langchain-scrapegraph`` python package:
@@ -43,68 +42,60 @@ class LocalScraperTool(BaseTool):
     Instantiate:
         .. code-block:: python
 
-            from langchain_scrapegraph.tools import LocalScraperTool
+            from langchain_scrapegraph.tools import SearchScraperTool
 
             # Will automatically get SGAI_API_KEY from environment
-            tool = LocalScraperTool()
+            tool = SearchScraperTool()
 
             # Or provide API key directly
-            tool = LocalScraperTool(api_key="your-api-key")
+            tool = SearchScraperTool(api_key="your-api-key")
 
             # Optionally, you can provide an output schema:
             from pydantic import BaseModel, Field
+            from typing import List
 
-            class CompanyInfo(BaseModel):
-                name: str = Field(description="Company name")
-                description: str = Field(description="Company description")
-                email: str = Field(description="Contact email")
+            class ProductInfo(BaseModel):
+                name: str = Field(description="Product name")
+                features: List[str] = Field(description="List of product features")
+                pricing: Dict[str, Any] = Field(description="Pricing information")
 
-            tool_with_schema = LocalScraperTool(llm_output_schema=CompanyInfo)
+            tool_with_schema = SearchScraperTool(llm_output_schema=ProductInfo)
 
     Use the tool:
         .. code-block:: python
 
-            html_content = '''
-            <html>
-                <body>
-                    <h1>Company Name</h1>
-                    <p>We are a technology company focused on AI solutions.</p>
-                    <div class="contact">
-                        <p>Email: contact@example.com</p>
-                        <p>Phone: (555) 123-4567</p>
-                    </div>
-                </body>
-            </html>
-            '''
-
             result = tool.invoke({
-                "user_prompt": "Extract company description and contact info",
-                "website_html": html_content
+                "user_prompt": "What are the key features and pricing of ChatGPT Plus?"
             })
 
             print(result)
-            # Without schema:
             # {
-            #     "description": "We are a technology company focused on AI solutions",
-            #     "contact": {
-            #         "email": "contact@example.com",
-            #         "phone": "(555) 123-4567"
-            #     }
+            #     "product": {
+            #         "name": "ChatGPT Plus",
+            #         "description": "Premium version of ChatGPT...",
+            #         ...
+            #     },
+            #     "features": [...],
+            #     "pricing": {...},
+            #     "reference_urls": [
+            #         "https://openai.com/chatgpt",
+            #         ...
+            #     ]
             # }
-            #
-            # With CompanyInfo schema:
-            # {
-            #     "name": "Company Name",
-            #     "description": "We are a technology company focused on AI solutions",
-            #     "email": "contact@example.com"
-            # }
+
+    Async usage:
+        .. code-block:: python
+
+            result = await tool.ainvoke({
+                "user_prompt": "What are the key features of Product X?"
+            })
     """
 
-    name: str = "LocalScraper"
+    name: str = "SearchScraper"
     description: str = (
-        "Useful when you need to extract structured data from a HTML webpage, applying also some reasoning using LLM, by providing an HTML string and an extraction prompt"
+        "Useful when you need to search and extract structured information from the web about a specific topic or query"
     )
-    args_schema: Type[BaseModel] = LocalscraperInput
+    args_schema: Type[BaseModel] = SearchScraperInput
     return_direct: bool = True
     client: Optional[Client] = None
     api_key: str
@@ -124,23 +115,20 @@ class LocalScraperTool(BaseTool):
     def _run(
         self,
         user_prompt: str,
-        website_html: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict:
-        """Use the tool to extract data from a website."""
+        """Use the tool to search and extract data from the web."""
         if not self.client:
             raise ValueError("Client not initialized")
 
         if self.llm_output_schema is None:
-            response = self.client.localscraper(
-                website_html=website_html,
+            response = self.client.searchscraper(
                 user_prompt=user_prompt,
             )
         elif isinstance(self.llm_output_schema, type) and issubclass(
             self.llm_output_schema, BaseModel
         ):
-            response = self.client.localscraper(
-                website_html=website_html,
+            response = self.client.searchscraper(
                 user_prompt=user_prompt,
                 output_schema=self.llm_output_schema,
             )
@@ -152,12 +140,10 @@ class LocalScraperTool(BaseTool):
     async def _arun(
         self,
         user_prompt: str,
-        website_html: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
         return self._run(
             user_prompt,
-            website_html,
             run_manager=run_manager.get_sync() if run_manager else None,
         )

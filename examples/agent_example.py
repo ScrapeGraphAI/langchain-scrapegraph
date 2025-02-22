@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 
 from langchain_scrapegraph.tools import (
     GetCreditsTool,
-    LocalScraperTool,
+    SearchScraperTool,
     SmartScraperTool,
 )
 
@@ -20,8 +20,8 @@ load_dotenv()
 # Initialize the tools
 tools = [
     SmartScraperTool(),
-    LocalScraperTool(),
     GetCreditsTool(),
+    SearchScraperTool(),
 ]
 
 # Create the prompt template

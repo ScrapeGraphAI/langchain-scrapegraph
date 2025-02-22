@@ -58,98 +58,76 @@ result = tool.invoke({
 print(result)
 ```
 
-<details>
-<summary>🔍 Using Output Schemas with SmartscraperTool</summary>
-
-You can define the structure of the output using Pydantic models:
+### 🌐 SearchscraperTool
+Search and extract structured information from the web using natural language prompts.
 
 ```python
-from typing import List
-from pydantic import BaseModel, Field
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SearchScraperTool
 
-class WebsiteInfo(BaseModel):
-    title: str = Field(description="The main title of the webpage")
-    description: str = Field(description="The main description or first paragraph")
-    urls: List[str] = Field(description="The URLs inside the webpage")
+# Initialize the tool (uses SGAI_API_KEY from environment)
+tool = SearchScraperTool()
 
-# Initialize with schema
-tool = SmartscraperTool(llm_output_schema=WebsiteInfo)
-
-# The output will conform to the WebsiteInfo schema
+# Search and extract information using natural language
 result = tool.invoke({
-    "website_url": "https://www.example.com",
-    "user_prompt": "Extract the website information"
+    "user_prompt": "What are the key features and pricing of ChatGPT Plus?"
 })
 
 print(result)
 # {
-#     "title": "Example Domain",
-#     "description": "This domain is for use in illustrative examples...",
-#     "urls": ["https://www.iana.org/domains/example"]
+#     "product": {
+#         "name": "ChatGPT Plus",
+#         "description": "Premium version of ChatGPT..."
+#     },
+#     "features": [...],
+#     "pricing": {...},
+#     "reference_urls": [
+#         "https://openai.com/chatgpt",
+#         ...
+#     ]
 # }
 ```
-</details>
-
-### 💻 LocalscraperTool
-Extract information from HTML content using AI.
-
-```python
-from langchain_scrapegraph.tools import LocalscraperTool
-
-tool = LocalscraperTool()
-result = tool.invoke({
-    "user_prompt": "Extract all contact information",
-    "website_html": "<html>...</html>"
-})
-
-print(result)
-```
 
 <details>
-<summary>🔍 Using Output Schemas with LocalscraperTool</summary>
+<summary>🔍 Using Output Schemas with SearchscraperTool</summary>
 
 You can define the structure of the output using Pydantic models:
 
 ```python
-from typing import Optional
+from typing import List, Dict
 from pydantic import BaseModel, Field
-from langchain_scrapegraph.tools import LocalscraperTool
+from langchain_scrapegraph.tools import SearchScraperTool
 
-class CompanyInfo(BaseModel):
-    name: str = Field(description="The company name")
-    description: str = Field(description="The company description")
-    email: Optional[str] = Field(description="Contact email if available")
-    phone: Optional[str] = Field(description="Contact phone if available")
+class ProductInfo(BaseModel):
+    name: str = Field(description="Product name")
+    features: List[str] = Field(description="List of product features")
+    pricing: Dict[str, Any] = Field(description="Pricing information")
+    reference_urls: List[str] = Field(description="Source URLs for the information")
 
 # Initialize with schema
-tool = LocalscraperTool(llm_output_schema=CompanyInfo)
+tool = SearchScraperTool(llm_output_schema=ProductInfo)
 
-html_content = """
-<html>
-    <body>
-        <h1>TechCorp Solutions</h1>
-        <p>We are a leading AI technology company.</p>
-        <div class="contact">
-            <p>Email: contact@techcorp.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-    </body>
-</html>
-"""
-
-# The output will conform to the CompanyInfo schema
+# The output will conform to the ProductInfo schema
 result = tool.invoke({
-    "website_html": html_content,
-    "user_prompt": "Extract the company information"
+    "user_prompt": "What are the key features and pricing of ChatGPT Plus?"
 })
 
 print(result)
 # {
-#     "name": "TechCorp Solutions",
-#     "description": "We are a leading AI technology company.",
-#     "email": "contact@techcorp.com",
-#     "phone": "(555) 123-4567"
+#     "name": "ChatGPT Plus",
+#     "features": [
+#         "GPT-4 access",
+#         "Faster response speed",
+#         ...
+#     ],
+#     "pricing": {
+#         "amount": 20,
+#         "currency": "USD",
+#         "period": "monthly"
+#     },
+#     "reference_urls": [
+#         "https://openai.com/chatgpt",
+#         ...
+#     ]
 # }
 ```
 </details>

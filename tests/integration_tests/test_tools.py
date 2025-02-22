@@ -15,7 +15,6 @@ from langchain_tests.integration_tests import ToolsIntegrationTests
 
 from langchain_scrapegraph.tools import (
     GetCreditsTool,
-    LocalScraperTool,
     MarkdownifyTool,
     SmartScraperTool,
 )
@@ -76,34 +75,3 @@ class TestMarkdownifyToolIntegration(ToolsIntegrationTests):
     @property
     def tool_invoke_params_example(self) -> dict:
         return {"website_url": "https://example.com"}
-
-
-class TestLocalScraperToolIntegration(ToolsIntegrationTests):
-    @property
-    def tool_constructor(self) -> Type[LocalScraperTool]:
-        return LocalScraperTool
-
-    @property
-    def tool_constructor_params(self) -> dict:
-        api_key = os.getenv("SGAI_API_KEY")
-        if not api_key:
-            pytest.skip("SGAI_API_KEY environment variable not set")
-        return {"api_key": api_key}
-
-    @property
-    def tool_invoke_params_example(self) -> dict:
-        return {
-            "user_prompt": "Make a summary and extract contact info",
-            "website_html": """
-                <html>
-                    <body>
-                        <h1>Company Name</h1>
-                        <p>We are a technology company focused on AI solutions.</p>
-                        <div class="contact">
-                            <p>Email: contact@example.com</p>
-                            <p>Phone: (555) 123-4567</p>
-                        </div>
-                    </body>
-                </html>
-            """,
-        }
