@@ -44,7 +44,7 @@ print(markdown)
 Extract structured data from any webpage using natural language prompts.
 
 ```python
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SmartScraperTool
 
 # Initialize the tool (uses SGAI_API_KEY from environment)
 tool = SmartscraperTool()
@@ -151,12 +151,12 @@ print(result)
 
 ```python
 from langchain.agents import initialize_agent, AgentType
-from langchain_scrapegraph.tools import SmartscraperTool
+from langchain_scrapegraph.tools import SmartScraperTool
 from langchain_openai import ChatOpenAI
 
 # Initialize tools
 tools = [
-    SmartscraperTool(),
+    SmartScraperTool(),
 ]
 
 # Create an agent
