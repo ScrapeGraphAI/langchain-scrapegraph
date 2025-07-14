@@ -9,10 +9,6 @@ Supercharge your LangChain agents with AI-powered web scraping capabilities. Lan
 ## 🔗 ScrapeGraph API & SDKs
 If you are looking for a quick solution to integrate ScrapeGraph in your system, check out our powerful API [here!](https://dashboard.scrapegraphai.com/login)
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/VinciGit00/Scrapegraph-ai/main/docs/assets/api-banner.png" alt="ScrapeGraph API Banner" style="width: 70%;">
-</p>
-
 We offer SDKs in both Python and Node.js, making it easy to integrate into your projects. Check them out below:
 
 | SDK       | Language | GitHub Link                                                                 |
