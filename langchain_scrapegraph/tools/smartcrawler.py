@@ -17,19 +17,15 @@ class SmartCrawlerInput(BaseModel):
     url: str = Field(description="URL of the website to start crawling from")
     cache_website: bool = Field(
         default=True,
-        description="Whether to cache the website content for faster subsequent requests"
+        description="Whether to cache the website content for faster subsequent requests",
     )
     depth: int = Field(
-        default=2,
-        description="Maximum depth to crawl from the starting URL"
+        default=2, description="Maximum depth to crawl from the starting URL"
     )
-    max_pages: int = Field(
-        default=2,
-        description="Maximum number of pages to crawl"
-    )
+    max_pages: int = Field(default=2, description="Maximum number of pages to crawl")
     same_domain_only: bool = Field(
         default=True,
-        description="Whether to only crawl pages from the same domain as the starting URL"
+        description="Whether to only crawl pages from the same domain as the starting URL",
     )
 
 
