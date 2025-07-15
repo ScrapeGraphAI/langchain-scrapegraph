@@ -189,4 +189,4 @@ class SmartCrawlerTool(BaseTool):
             max_pages=max_pages,
             same_domain_only=same_domain_only,
             run_manager=run_manager.get_sync() if run_manager else None,
-        ) 
+        )
