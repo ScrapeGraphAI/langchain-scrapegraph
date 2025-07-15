@@ -1,3 +1,17 @@
+## [1.4.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.3.0...v1.4.0) (2025-07-15)
+
+
+### Features
+
+* add integration for smartcrawler ([791f675](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/791f67592a5734488e5653435b8aef966d2dbbd0))
+* add pre commit ([9637524](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/9637524a4c90a785c87470f5a554c7ac760c4327))
+* add smartcrawler ([d508640](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/d50864015a7b3c4c17643326927382b7bed3319c))
+
+
+### Bug Fixes
+
+* fix ([8aac37e](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/8aac37e6c64932f4c5788ed7da144165edb572b2))
+
 ## [1.3.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.2.0...v1.3.0) (2025-02-22)
 
 
