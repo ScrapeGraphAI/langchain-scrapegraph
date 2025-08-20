@@ -1,3 +1,10 @@
+## [1.5.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.4.0...v1.5.0) (2025-08-20)
+
+
+### Features
+
+* add agentic scraper integration ([ca1c88b](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/ca1c88b3d89972e6404add663e5172f3c67df31b))
+
 ## [1.4.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.3.0...v1.4.0) (2025-07-15)
 
 
