@@ -80,6 +80,148 @@ class MockClient:
             "error": "",
         }
 
+    def scrape(
+        self, website_url: str, render_heavy_js: bool = False, headers: dict = None
+    ) -> dict:
+        """Mock scrape method"""
+        return {
+            "scrape_request_id": "test-scrape-id",
+            "status": "success",
+            "html": "<html><body><h1>Example Domain</h1><p>Test content</p></body></html>",
+            "error": None,
+        }
+
+    def create_scheduled_job(
+        self,
+        job_name: str,
+        service_type: str,
+        cron_expression: str,
+        job_config: dict,
+        is_active: bool = True,
+    ) -> dict:
+        """Mock create_scheduled_job method"""
+        return {
+            "id": "test-job-id-123",
+            "job_name": job_name,
+            "service_type": service_type,
+            "cron_expression": cron_expression,
+            "job_config": job_config,
+            "is_active": is_active,
+            "created_at": "2024-01-01T00:00:00Z",
+            "next_run_at": "2024-01-02T09:00:00Z",
+        }
+
+    def get_scheduled_jobs(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        service_type: str = None,
+        is_active: bool = None,
+    ) -> dict:
+        """Mock get_scheduled_jobs method"""
+        jobs = [
+            {
+                "id": "test-job-1",
+                "job_name": "Test Job 1",
+                "service_type": "smartscraper",
+                "cron_expression": "0 9 * * *",
+                "is_active": True,
+                "created_at": "2024-01-01T00:00:00Z",
+                "next_run_at": "2024-01-02T09:00:00Z",
+            }
+        ]
+
+        # Apply filters
+        if service_type:
+            jobs = [job for job in jobs if job["service_type"] == service_type]
+        if is_active is not None:
+            jobs = [job for job in jobs if job["is_active"] == is_active]
+
+        return {"jobs": jobs, "total": len(jobs), "page": page, "page_size": page_size}
+
+    def get_scheduled_job(self, job_id: str) -> dict:
+        """Mock get_scheduled_job method"""
+        return {
+            "id": job_id,
+            "job_name": "Test Job",
+            "service_type": "smartscraper",
+            "cron_expression": "0 9 * * *",
+            "job_config": {"website_url": "https://example.com", "user_prompt": "test"},
+            "is_active": True,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "next_run_at": "2024-01-02T09:00:00Z",
+        }
+
+    def update_scheduled_job(
+        self,
+        job_id: str,
+        job_name: str = None,
+        cron_expression: str = None,
+        job_config: dict = None,
+        is_active: bool = None,
+    ) -> dict:
+        """Mock update_scheduled_job method"""
+        return {
+            "id": job_id,
+            "job_name": job_name or "Updated Test Job",
+            "service_type": "smartscraper",
+            "cron_expression": cron_expression or "0 8 * * *",
+            "is_active": is_active if is_active is not None else True,
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+
+    def pause_scheduled_job(self, job_id: str) -> dict:
+        """Mock pause_scheduled_job method"""
+        return {
+            "message": "Job paused successfully",
+            "job_id": job_id,
+            "is_active": False,
+        }
+
+    def resume_scheduled_job(self, job_id: str) -> dict:
+        """Mock resume_scheduled_job method"""
+        return {
+            "message": "Job resumed successfully",
+            "job_id": job_id,
+            "is_active": True,
+            "next_run_at": "2024-01-02T09:00:00Z",
+        }
+
+    def trigger_scheduled_job(self, job_id: str) -> dict:
+        """Mock trigger_scheduled_job method"""
+        return {
+            "message": "Job triggered successfully",
+            "job_id": job_id,
+            "execution_id": "exec-123",
+            "triggered_at": "2024-01-01T12:00:00Z",
+        }
+
+    def get_job_executions(
+        self, job_id: str, page: int = 1, page_size: int = 10
+    ) -> dict:
+        """Mock get_job_executions method"""
+        executions = [
+            {
+                "id": "exec-1",
+                "job_id": job_id,
+                "status": "completed",
+                "started_at": "2024-01-01T09:00:00Z",
+                "completed_at": "2024-01-01T09:01:00Z",
+                "credits_used": 1,
+            }
+        ]
+        return {
+            "executions": executions,
+            "total": len(executions),
+            "page": page,
+            "page_size": page_size,
+        }
+
+    def delete_scheduled_job(self, job_id: str) -> dict:
+        """Mock delete_scheduled_job method"""
+        return {"message": "Job deleted successfully", "job_id": job_id}
+
     def close(self) -> None:
         """Mock close method"""
         pass
@@ -144,3 +286,82 @@ class MockMarkdownifyTool(BaseTool):
 
     def _run(self, **kwargs: Any) -> str:
         return "# Example Domain\n\nTest paragraph"
+
+
+class MockScrapeInput(BaseModel):
+    website_url: str = Field(description="Test URL")
+    render_heavy_js: bool = Field(default=False, description="Test JS rendering")
+    headers: Optional[Dict[str, str]] = Field(default=None, description="Test headers")
+
+
+class MockScrapeTool(BaseTool):
+    name: str = "Scrape"
+    description: str = "Test description"
+    args_schema: type[BaseModel] = MockScrapeInput
+    client: Optional[MockClient] = None
+    api_key: str
+
+    def _run(self, **kwargs: Any) -> Dict:
+        return {
+            "scrape_request_id": "test-scrape-id",
+            "status": "success",
+            "html": "<html><body><h1>Example Domain</h1><p>Test content</p></body></html>",
+            "error": None,
+        }
+
+
+class MockCreateScheduledJobInput(BaseModel):
+    job_name: str = Field(description="Test job name")
+    service_type: str = Field(description="Test service type")
+    cron_expression: str = Field(description="Test cron expression")
+    job_config: Dict[str, Any] = Field(description="Test job config")
+    is_active: bool = Field(default=True, description="Test active status")
+
+
+class MockCreateScheduledJobTool(BaseTool):
+    name: str = "CreateScheduledJob"
+    description: str = "Test description"
+    args_schema: type[BaseModel] = MockCreateScheduledJobInput
+    client: Optional[MockClient] = None
+    api_key: str
+
+    def _run(self, **kwargs: Any) -> Dict:
+        return {
+            "id": "test-job-id-123",
+            "job_name": kwargs.get("job_name", "Test Job"),
+            "service_type": kwargs.get("service_type", "smartscraper"),
+            "cron_expression": kwargs.get("cron_expression", "0 9 * * *"),
+            "job_config": kwargs.get("job_config", {}),
+            "is_active": kwargs.get("is_active", True),
+            "created_at": "2024-01-01T00:00:00Z",
+            "next_run_at": "2024-01-02T09:00:00Z",
+        }
+
+
+class MockGetScheduledJobsInput(BaseModel):
+    page: int = Field(default=1, description="Test page")
+    page_size: int = Field(default=10, description="Test page size")
+    service_type: Optional[str] = Field(default=None, description="Test service type")
+    is_active: Optional[bool] = Field(default=None, description="Test active status")
+
+
+class MockGetScheduledJobsTool(BaseTool):
+    name: str = "GetScheduledJobs"
+    description: str = "Test description"
+    args_schema: type[BaseModel] = MockGetScheduledJobsInput
+    client: Optional[MockClient] = None
+    api_key: str
+
+    def _run(self, **kwargs: Any) -> Dict:
+        jobs = [
+            {
+                "id": "test-job-1",
+                "job_name": "Test Job 1",
+                "service_type": "smartscraper",
+                "cron_expression": "0 9 * * *",
+                "is_active": True,
+                "created_at": "2024-01-01T00:00:00Z",
+                "next_run_at": "2024-01-02T09:00:00Z",
+            }
+        ]
+        return {"jobs": jobs, "total": len(jobs), "page": 1, "page_size": 10}

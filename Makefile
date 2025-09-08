@@ -15,9 +15,15 @@ install:
 
 # Linting and Formatting Checks
 lint:
-	poetry run ruff check $(PACKAGE_NAME) $(TEST_DIR)
-	poetry run black --check $(PACKAGE_NAME) $(TEST_DIR)
-	poetry run isort --check-only $(PACKAGE_NAME) $(TEST_DIR)
+	poetry run ruff check $(PACKAGE_NAME) $(TEST_DIR) examples
+	poetry run black --check $(PACKAGE_NAME) $(TEST_DIR) examples
+	poetry run isort --check-only $(PACKAGE_NAME) $(TEST_DIR) examples
+
+# Auto-format code
+format:
+	poetry run ruff check --fix $(PACKAGE_NAME) $(TEST_DIR) examples
+	poetry run black $(PACKAGE_NAME) $(TEST_DIR) examples
+	poetry run isort $(PACKAGE_NAME) $(TEST_DIR) examples
 
 # Type Checking with MyPy
 type-check:
