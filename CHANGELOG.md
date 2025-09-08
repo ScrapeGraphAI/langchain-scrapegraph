@@ -1,3 +1,10 @@
+## [1.6.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.5.0...v1.6.0) (2025-09-08)
+
+
+### Features
+
+* add new endpoint ([3eaa5bb](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/3eaa5bb0bd3c4bf255317cb800fb183ef7b7a001))
+
 ## [1.5.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.4.0...v1.5.0) (2025-08-20)
 
 
