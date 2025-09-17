@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, TypeVar
 
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
@@ -9,6 +9,8 @@ from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
 from scrapegraph_py import Client
 
+T = TypeVar("T", bound=BaseModel)
+
 
 class SmartScraperInput(BaseModel):
     user_prompt: str = Field(
@@ -18,6 +20,10 @@ class SmartScraperInput(BaseModel):
     website_html: Optional[str] = Field(
         default=None,
         description="Optional HTML content to process instead of fetching from website_url",
+    )
+    render_heavy_js: bool = Field(
+        default=False,
+        description="If True, enables full browser rendering for JavaScript-heavy websites",
     )
 
 
@@ -122,7 +128,7 @@ class SmartScraperTool(BaseTool):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_environment(cls, values: Dict) -> Dict:
+    def validate_environment(cls: Type[T], values: Dict[str, Any]) -> Dict[str, Any]:
         """Validate that api key exists in environment."""
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
         values["client"] = Client(api_key=values["api_key"])
@@ -136,9 +142,21 @@ class SmartScraperTool(BaseTool):
         user_prompt: str,
         website_url: str,
         website_html: Optional[str] = None,
+        render_heavy_js: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
-        """Use the tool to extract data from a website."""
+    ) -> Dict[str, Any]:
+        """Use the tool to extract data from a website.
+
+        Args:
+            user_prompt: What to extract from the webpage
+            website_url: URL to scrape
+            website_html: Optional HTML content to process instead of fetching from URL
+            render_heavy_js: If True, enables full browser rendering for JavaScript-heavy sites
+            run_manager: Optional callback manager
+
+        Returns:
+            dict: Extracted data in the requested format
+        """
         if not self.client:
             raise ValueError("Client not initialized")
 
@@ -147,6 +165,7 @@ class SmartScraperTool(BaseTool):
                 website_url=website_url,
                 user_prompt=user_prompt,
                 website_html=website_html,
+                render_heavy_js=render_heavy_js,
             )
         elif isinstance(self.llm_output_schema, type) and issubclass(
             self.llm_output_schema, BaseModel
@@ -155,6 +174,7 @@ class SmartScraperTool(BaseTool):
                 website_url=website_url,
                 user_prompt=user_prompt,
                 website_html=website_html,
+                render_heavy_js=render_heavy_js,
                 output_schema=self.llm_output_schema,
             )
         else:
@@ -167,12 +187,14 @@ class SmartScraperTool(BaseTool):
         user_prompt: str,
         website_url: str,
         website_html: Optional[str] = None,
+        render_heavy_js: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Dict[str, Any]:
         """Use the tool asynchronously."""
         return self._run(
             user_prompt,
             website_url,
             website_html=website_html,
+            render_heavy_js=render_heavy_js,
             run_manager=run_manager.get_sync() if run_manager else None,
         )

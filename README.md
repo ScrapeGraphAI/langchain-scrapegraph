@@ -22,6 +22,41 @@ We offer SDKs in both Python and Node.js, making it easy to integrate into your 
 pip install langchain-scrapegraph
 ```
 
+## 🔄 Development Setup
+
+### Pre-commit Hooks
+
+We use pre-commit hooks to ensure code quality and consistency. Install the pre-commit hooks with:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The following hooks are configured:
+
+- **black**: Code formatting
+- **ruff**: Fast Python linter
+- **isort**: Import sorting
+- **pre-commit-hooks**: Various checks including:
+  - trailing whitespace
+  - end of files
+  - yaml validation
+  - large files
+  - merge conflicts
+  - private keys
+  - debug statements
+- **poetry**: Package management checks
+  - poetry-check: Validate pyproject.toml
+  - poetry-lock: Ensure poetry.lock is up to date
+- **mypy**: Static type checking
+
+Run the hooks manually with:
+
+```bash
+pre-commit run --all-files
+```
+
 ## 🛠️ Available Tools
 
 ### 📝 MarkdownifyTool

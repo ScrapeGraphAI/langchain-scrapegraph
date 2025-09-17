@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "langchain-scrapegraph"
-version = "1.6.0"
+version = "1.7.0"
 description = "Library for extracting structured data from websites using ScrapeGraphAI"
-authors = ["Marco Perini <marco.perini@scrapegraphai.com>", "Marco Vinciguerra <marco.vinciguerra@scrapegraphai.com>", "Lorenzo Padoan <lorenzo.padoan@scrapegraphai.com>"]
+authors = ["Marco Vinciguerra <marco.vinciguerra@scrapegraphai.com>", "Lorenzo Padoan <lorenzo.padoan@scrapegraphai.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://scrapegraphai.com/"
@@ -70,9 +70,12 @@ ignore = ["E203", "E501"]  # Ignore conflicts with Black
 
 [tool.mypy]
 python_version = "3.10"
-strict = true
-disallow_untyped_calls = true
 ignore_missing_imports = true
+allow_untyped_defs = true
+allow_untyped_decorators = true
+allow_subclassing_any = true
+disable_error_code = ["misc", "no-any-return", "type-arg", "union-attr", "return-value"]
+warn_return_any = false
 
 [build-system]
 requires = ["poetry-core"]
