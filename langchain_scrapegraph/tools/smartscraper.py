@@ -165,7 +165,6 @@ class SmartScraperTool(BaseTool):
                 website_url=website_url,
                 user_prompt=user_prompt,
                 website_html=website_html,
-                render_heavy_js=render_heavy_js,
             )
         elif isinstance(self.llm_output_schema, type) and issubclass(
             self.llm_output_schema, BaseModel
@@ -174,7 +173,6 @@ class SmartScraperTool(BaseTool):
                 website_url=website_url,
                 user_prompt=user_prompt,
                 website_html=website_html,
-                render_heavy_js=render_heavy_js,
                 output_schema=self.llm_output_schema,
             )
         else:
