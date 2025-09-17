@@ -1,3 +1,10 @@
+## [1.10.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.9.0...v1.10.0) (2025-09-17)
+
+
+### Features
+
+* update version ([b1c7cf0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/b1c7cf0f87447925556cacc7b8297f5efad331f7))
+
 ## [1.9.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.8.0...v1.9.0) (2025-09-17)
 
 
