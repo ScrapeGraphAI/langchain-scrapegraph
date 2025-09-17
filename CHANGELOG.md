@@ -1,3 +1,10 @@
+## [1.8.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.7.0...v1.8.0) (2025-09-17)
+
+
+### Features
+
+* update version toml ([7714d29](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/7714d291d9685c29d0404494e67d1147c82f1b95))
+
 ## [1.7.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.6.0...v1.7.0) (2025-09-17)
 
 
