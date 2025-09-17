@@ -105,6 +105,12 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
 
+      - name: Build package
+        run: |
+          pip install --upgrade pip
+          pip install "pkginfo>=1.12,<2.0"
+          poetry build
+
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4.1.0
         with:
