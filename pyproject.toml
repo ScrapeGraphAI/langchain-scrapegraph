@@ -1,13 +1,17 @@
 [tool.poetry]
 name = "langchain-scrapegraph"
-version = "1.8.0"
+version = "1.10.0"
 description = "Library for extracting structured data from websites using ScrapeGraphAI"
 authors = ["Marco Vinciguerra <marco.vinciguerra@scrapegraphai.com>", "Lorenzo Padoan <lorenzo.padoan@scrapegraphai.com>"]
+maintainers = ["Marco Vinciguerra <marco.vinciguerra@scrapegraphai.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://scrapegraphai.com/"
 repository = "https://github.com/scrapegraphai/langchain-scrapegraph"
 documentation = "https://scrapegraphai.com/docs"
+packages = [
+    { include = "langchain_scrapegraph", from = "." }
+]
 keywords = [
     "scrapegraph",
     "ai",
@@ -30,8 +34,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-
-packages = [{include = "langchain_scrapegraph"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
