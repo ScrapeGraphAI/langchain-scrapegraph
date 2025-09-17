@@ -1,3 +1,10 @@
+## [1.11.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.10.0...v1.11.0) (2025-09-17)
+
+
+### Features
+
+* fix error ([faca979](https://github.com/ScrapeGraphAI/langchain-scrapegraph/commit/faca979da06e657bef942b55b09f3b0b1bb44bca))
+
 ## [1.10.0](https://github.com/ScrapeGraphAI/langchain-scrapegraph/compare/v1.9.0...v1.10.0) (2025-09-17)
 
 
