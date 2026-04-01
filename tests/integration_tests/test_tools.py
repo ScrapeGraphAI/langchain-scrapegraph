@@ -13,20 +13,16 @@ import pytest
 from dotenv import load_dotenv
 from langchain_tests.integration_tests import ToolsIntegrationTests
 
-from langchain_scrapegraph.tools import (
-    GetCreditsTool,
-    MarkdownifyTool,
-    SmartScraperTool,
-)
+from langchain_scrapegraph.tools import ExtractTool, GetCreditsTool, MarkdownifyTool
 
 # Load environment variables from .env file
 load_dotenv()
 
 
-class TestSmartScraperToolIntegration(ToolsIntegrationTests):
+class TestExtractToolIntegration(ToolsIntegrationTests):
     @property
-    def tool_constructor(self) -> Type[SmartScraperTool]:
-        return SmartScraperTool
+    def tool_constructor(self) -> Type[ExtractTool]:
+        return ExtractTool
 
     @property
     def tool_constructor_params(self) -> dict:
@@ -38,8 +34,8 @@ class TestSmartScraperToolIntegration(ToolsIntegrationTests):
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
-            "user_prompt": "Extract the main heading.",
-            "website_url": "https://example.com",
+            "url": "https://example.com",
+            "prompt": "Extract the main heading.",
         }
 
 
