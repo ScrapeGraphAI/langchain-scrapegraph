@@ -9,19 +9,15 @@ from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-from langchain_scrapegraph.tools import (
-    GetCreditsTool,
-    SearchScraperTool,
-    SmartScraperTool,
-)
+from langchain_scrapegraph.tools import ExtractTool, GetCreditsTool, SearchTool
 
 load_dotenv()
 
 # Initialize the tools
 tools = [
-    SmartScraperTool(),
+    ExtractTool(),
     GetCreditsTool(),
-    SearchScraperTool(),
+    SearchTool(),
 ]
 
 # Create the prompt template

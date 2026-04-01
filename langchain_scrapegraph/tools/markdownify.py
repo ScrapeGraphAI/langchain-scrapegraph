@@ -17,6 +17,8 @@ class MarkdownifyInput(BaseModel):
 class MarkdownifyTool(BaseTool):
     """Tool for converting webpages to Markdown format using ScrapeGraph AI.
 
+    In v2, this uses the scrape endpoint with format='markdown'.
+
     Setup:
         Install ``langchain-scrapegraph`` python package:
 
@@ -31,20 +33,12 @@ class MarkdownifyTool(BaseTool):
 
             export SGAI_API_KEY="your-api-key"
 
-    Key init args:
-        api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
-        client: Optional pre-configured ScrapeGraph client instance.
-
     Instantiate:
         .. code-block:: python
 
             from langchain_scrapegraph.tools import MarkdownifyTool
 
-            # Will automatically get SGAI_API_KEY from environment
             tool = MarkdownifyTool()
-
-            # Or provide API key directly
-            tool = MarkdownifyTool(api_key="your-api-key")
 
     Use the tool:
         .. code-block:: python
@@ -52,11 +46,6 @@ class MarkdownifyTool(BaseTool):
             result = tool.invoke({
                 "website_url": "https://example.com"
             })
-
-            print(result)
-            # # Example Domain
-            #
-            # This domain is for use in illustrative examples...
 
     Async usage:
         .. code-block:: python
@@ -78,7 +67,6 @@ class MarkdownifyTool(BaseTool):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        """Validate that api key exists in environment."""
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
         values["client"] = Client(api_key=values["api_key"])
         return values
@@ -91,18 +79,16 @@ class MarkdownifyTool(BaseTool):
         website_url: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> dict:
-        """Use the tool to extract data from a website."""
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.markdownify(website_url=website_url)
-        return response["result"]
+        response = self.client.scrape(url=website_url, format="markdown")
+        return response
 
     async def _arun(
         self,
         website_url: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> str:
-        """Use the tool asynchronously."""
+    ) -> dict:
         return self._run(
             website_url,
             run_manager=run_manager.get_sync() if run_manager else None,

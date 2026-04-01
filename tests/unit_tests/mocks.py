@@ -1,249 +1,187 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
 
+class MockCrawlNamespace:
+    def __init__(self, client):
+        self._client = client
+
+    def start(
+        self,
+        url: str,
+        depth: int = 2,
+        max_pages: int = 10,
+        format: str = "markdown",
+        include_patterns: Optional[List[str]] = None,
+        exclude_patterns: Optional[List[str]] = None,
+        fetch_config=None,
+    ) -> dict:
+        return {
+            "id": "crawl-job-123",
+            "status": "running",
+            "url": url,
+            "depth": depth,
+            "max_pages": max_pages,
+        }
+
+    def status(self, crawl_id: str) -> dict:
+        return {
+            "id": crawl_id,
+            "status": "completed",
+            "pages_crawled": 5,
+            "results": [{"url": "https://example.com", "content": "# Example"}],
+        }
+
+    def stop(self, crawl_id: str) -> dict:
+        return {"id": crawl_id, "status": "stopped"}
+
+    def resume(self, crawl_id: str) -> dict:
+        return {"id": crawl_id, "status": "running"}
+
+
+class MockMonitorNamespace:
+    def __init__(self, client):
+        self._client = client
+
+    def create(
+        self,
+        name: str,
+        url: str,
+        prompt: str,
+        cron: str,
+        output_schema=None,
+        fetch_config=None,
+        llm_config=None,
+    ) -> dict:
+        return {
+            "id": "monitor-123",
+            "name": name,
+            "url": url,
+            "prompt": prompt,
+            "cron": cron,
+            "status": "active",
+        }
+
+    def list(self) -> dict:
+        return {
+            "monitors": [
+                {
+                    "id": "monitor-123",
+                    "name": "Test Monitor",
+                    "url": "https://example.com",
+                    "status": "active",
+                }
+            ]
+        }
+
+    def get(self, monitor_id: str) -> dict:
+        return {
+            "id": monitor_id,
+            "name": "Test Monitor",
+            "url": "https://example.com",
+            "status": "active",
+        }
+
+    def pause(self, monitor_id: str) -> dict:
+        return {"id": monitor_id, "status": "paused"}
+
+    def resume(self, monitor_id: str) -> dict:
+        return {"id": monitor_id, "status": "active"}
+
+    def delete(self, monitor_id: str) -> dict:
+        return {"message": "Monitor deleted successfully", "id": monitor_id}
+
+
 class MockClient:
     def __init__(self, api_key: str = None, *args, **kwargs):
-        """Initialize with mock methods that return proper response structures"""
         self._api_key = api_key
+        self.crawl = MockCrawlNamespace(self)
+        self.monitor = MockMonitorNamespace(self)
 
-    def smartscraper(
-        self, website_url: str, user_prompt: str, website_html: str = None
+    def extract(
+        self,
+        url: str,
+        prompt: str,
+        output_schema=None,
+        fetch_config=None,
+        llm_config=None,
     ) -> dict:
-        """Mock smartscraper method"""
-        # If website_html is provided, use it to determine the response
-        if website_html and "<h1>Test</h1>" in website_html:
-            return {
-                "request_id": "test-id",
-                "status": "completed",
-                "website_url": website_url,
-                "user_prompt": user_prompt,
-                "result": {
-                    "main_heading": "Test",
-                    "first_paragraph": "Test paragraph",
-                },
-                "error": "",
-            }
-
-        # Default response for URL-based requests
         return {
-            "request_id": "test-id",
-            "status": "completed",
-            "website_url": website_url,
-            "user_prompt": user_prompt,
-            "result": {
+            "id": "test-id",
+            "data": {
                 "main_heading": "Example Domain",
                 "first_paragraph": "Test paragraph",
             },
-            "error": "",
         }
 
-    def searchscraper(self, user_prompt: str) -> dict:
-        """Mock searchscraper method"""
+    def search(
+        self,
+        query: str,
+        num_results: int = 5,
+        output_schema=None,
+        llm_config=None,
+    ) -> dict:
         return {
-            "request_id": "test-id",
-            "status": "completed",
-            "user_prompt": user_prompt,
-            "result": {
-                "product": {"name": "Test Product", "description": "Test description"},
-                "features": [{"name": "Feature 1", "description": "Description 1"}],
-                "pricing": {
-                    "plans": [
-                        {
-                            "name": "Basic Plan",
-                            "price": {
-                                "amount": "10",
-                                "currency": "USD",
-                                "period": "monthly",
-                            },
-                        }
-                    ]
-                },
-            },
-            "reference_urls": ["https://example.com/test"],
-            "error": "",
+            "id": "test-id",
+            "results": [
+                {
+                    "title": "Test Result",
+                    "url": "https://example.com",
+                    "content": "Test content",
+                }
+            ],
         }
 
-    def get_credits(self) -> dict:
-        """Mock get_credits method"""
+    def scrape(self, url: str, format: str = "markdown", fetch_config=None) -> dict:
+        if format == "html":
+            return {
+                "id": "test-id",
+                "format": "html",
+                "content": ["<html><body><h1>Example Domain</h1></body></html>"],
+            }
+        return {
+            "id": "test-id",
+            "format": "markdown",
+            "content": ["# Example Domain\n\nTest paragraph"],
+        }
+
+    def credits(self) -> dict:
         return {"remaining_credits": 50, "total_credits_used": 543}
 
-    def markdownify(self, website_url: str) -> dict:
-        """Mock markdownify method"""
-        return {
-            "request_id": "test-id",
-            "status": "completed",
-            "website_url": website_url,
-            "result": "# Example Domain\n\nTest paragraph",
-            "error": "",
-        }
-
-    def scrape(
-        self, website_url: str, render_heavy_js: bool = False, headers: dict = None
-    ) -> dict:
-        """Mock scrape method"""
-        return {
-            "scrape_request_id": "test-scrape-id",
-            "status": "success",
-            "html": "<html><body><h1>Example Domain</h1><p>Test content</p></body></html>",
-            "error": None,
-        }
-
-    def create_scheduled_job(
+    def history(
         self,
-        job_name: str,
-        service_type: str,
-        cron_expression: str,
-        job_config: dict,
-        is_active: bool = True,
+        endpoint: str = None,
+        status: str = None,
+        limit: int = None,
+        offset: int = None,
     ) -> dict:
-        """Mock create_scheduled_job method"""
         return {
-            "id": "test-job-id-123",
-            "job_name": job_name,
-            "service_type": service_type,
-            "cron_expression": cron_expression,
-            "job_config": job_config,
-            "is_active": is_active,
-            "created_at": "2024-01-01T00:00:00Z",
-            "next_run_at": "2024-01-02T09:00:00Z",
+            "requests": [
+                {
+                    "id": "req-123",
+                    "endpoint": "scrape",
+                    "status": "completed",
+                    "created_at": "2024-01-01T00:00:00Z",
+                }
+            ],
+            "total": 1,
         }
-
-    def get_scheduled_jobs(
-        self,
-        page: int = 1,
-        page_size: int = 10,
-        service_type: str = None,
-        is_active: bool = None,
-    ) -> dict:
-        """Mock get_scheduled_jobs method"""
-        jobs = [
-            {
-                "id": "test-job-1",
-                "job_name": "Test Job 1",
-                "service_type": "smartscraper",
-                "cron_expression": "0 9 * * *",
-                "is_active": True,
-                "created_at": "2024-01-01T00:00:00Z",
-                "next_run_at": "2024-01-02T09:00:00Z",
-            }
-        ]
-
-        # Apply filters
-        if service_type:
-            jobs = [job for job in jobs if job["service_type"] == service_type]
-        if is_active is not None:
-            jobs = [job for job in jobs if job["is_active"] == is_active]
-
-        return {"jobs": jobs, "total": len(jobs), "page": page, "page_size": page_size}
-
-    def get_scheduled_job(self, job_id: str) -> dict:
-        """Mock get_scheduled_job method"""
-        return {
-            "id": job_id,
-            "job_name": "Test Job",
-            "service_type": "smartscraper",
-            "cron_expression": "0 9 * * *",
-            "job_config": {"website_url": "https://example.com", "user_prompt": "test"},
-            "is_active": True,
-            "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z",
-            "next_run_at": "2024-01-02T09:00:00Z",
-        }
-
-    def update_scheduled_job(
-        self,
-        job_id: str,
-        job_name: str = None,
-        cron_expression: str = None,
-        job_config: dict = None,
-        is_active: bool = None,
-    ) -> dict:
-        """Mock update_scheduled_job method"""
-        return {
-            "id": job_id,
-            "job_name": job_name or "Updated Test Job",
-            "service_type": "smartscraper",
-            "cron_expression": cron_expression or "0 8 * * *",
-            "is_active": is_active if is_active is not None else True,
-            "updated_at": "2024-01-01T00:00:00Z",
-        }
-
-    def pause_scheduled_job(self, job_id: str) -> dict:
-        """Mock pause_scheduled_job method"""
-        return {
-            "message": "Job paused successfully",
-            "job_id": job_id,
-            "is_active": False,
-        }
-
-    def resume_scheduled_job(self, job_id: str) -> dict:
-        """Mock resume_scheduled_job method"""
-        return {
-            "message": "Job resumed successfully",
-            "job_id": job_id,
-            "is_active": True,
-            "next_run_at": "2024-01-02T09:00:00Z",
-        }
-
-    def trigger_scheduled_job(self, job_id: str) -> dict:
-        """Mock trigger_scheduled_job method"""
-        return {
-            "message": "Job triggered successfully",
-            "job_id": job_id,
-            "execution_id": "exec-123",
-            "triggered_at": "2024-01-01T12:00:00Z",
-        }
-
-    def get_job_executions(
-        self, job_id: str, page: int = 1, page_size: int = 10
-    ) -> dict:
-        """Mock get_job_executions method"""
-        executions = [
-            {
-                "id": "exec-1",
-                "job_id": job_id,
-                "status": "completed",
-                "started_at": "2024-01-01T09:00:00Z",
-                "completed_at": "2024-01-01T09:01:00Z",
-                "credits_used": 1,
-            }
-        ]
-        return {
-            "executions": executions,
-            "total": len(executions),
-            "page": page,
-            "page_size": page_size,
-        }
-
-    def delete_scheduled_job(self, job_id: str) -> dict:
-        """Mock delete_scheduled_job method"""
-        return {"message": "Job deleted successfully", "job_id": job_id}
 
     def close(self) -> None:
-        """Mock close method"""
         pass
 
 
-class MockSmartScraperInput(BaseModel):
-    user_prompt: str = Field(description="Test prompt")
-    website_url: str = Field(description="Test URL")
+class MockExtractInput(BaseModel):
+    url: str = Field(description="Test URL")
+    prompt: str = Field(description="Test prompt")
 
 
-class MockSearchScraperInput(BaseModel):
-    user_prompt: str = Field(description="Test prompt")
-
-
-class MockMarkdownifyInput(BaseModel):
-    website_url: str = Field(description="Test URL")
-
-
-class MockSmartScraperTool(BaseTool):
-    name: str = "SmartScraper"
+class MockExtractTool(BaseTool):
+    name: str = "Extract"
     description: str = "Test description"
-    args_schema: type[BaseModel] = MockSmartScraperInput
+    args_schema: type[BaseModel] = MockExtractInput
     client: Optional[MockClient] = None
     api_key: str
 
@@ -251,19 +189,28 @@ class MockSmartScraperTool(BaseTool):
         return {"main_heading": "Test", "first_paragraph": "Test"}
 
 
-class MockSearchScraperTool(BaseTool):
-    name: str = "SearchScraper"
+class MockSearchInput(BaseModel):
+    query: str = Field(description="Test query")
+    num_results: int = Field(default=5, description="Number of results")
+
+
+class MockSearchTool(BaseTool):
+    name: str = "Search"
     description: str = "Test description"
-    args_schema: type[BaseModel] = MockSearchScraperInput
+    args_schema: type[BaseModel] = MockSearchInput
     client: Optional[MockClient] = None
     api_key: str
     llm_output_schema: Optional[Type[BaseModel]] = None
 
     def _run(self, **kwargs: Any) -> Dict:
         return {
-            "product": {"name": "Test Product", "description": "Test description"},
-            "features": [{"name": "Feature 1", "description": "Description 1"}],
-            "reference_urls": ["https://example.com/test"],
+            "results": [
+                {
+                    "title": "Test Result",
+                    "url": "https://example.com",
+                    "content": "Test",
+                }
+            ],
         }
 
 
@@ -277,6 +224,10 @@ class MockGetCreditsTool(BaseTool):
         return {"remaining_credits": 50, "total_credits_used": 543}
 
 
+class MockMarkdownifyInput(BaseModel):
+    website_url: str = Field(description="Test URL")
+
+
 class MockMarkdownifyTool(BaseTool):
     name: str = "Markdownify"
     description: str = "Test description"
@@ -284,14 +235,17 @@ class MockMarkdownifyTool(BaseTool):
     client: Optional[MockClient] = None
     api_key: str
 
-    def _run(self, **kwargs: Any) -> str:
-        return "# Example Domain\n\nTest paragraph"
+    def _run(self, **kwargs: Any) -> Dict:
+        return {
+            "id": "test-id",
+            "format": "markdown",
+            "content": ["# Example Domain\n\nTest paragraph"],
+        }
 
 
 class MockScrapeInput(BaseModel):
-    website_url: str = Field(description="Test URL")
-    render_heavy_js: bool = Field(default=False, description="Test JS rendering")
-    headers: Optional[Dict[str, str]] = Field(default=None, description="Test headers")
+    url: str = Field(description="Test URL")
+    format: str = Field(default="markdown", description="Output format")
 
 
 class MockScrapeTool(BaseTool):
@@ -303,65 +257,52 @@ class MockScrapeTool(BaseTool):
 
     def _run(self, **kwargs: Any) -> Dict:
         return {
-            "scrape_request_id": "test-scrape-id",
-            "status": "success",
-            "html": "<html><body><h1>Example Domain</h1><p>Test content</p></body></html>",
-            "error": None,
+            "id": "test-id",
+            "format": "markdown",
+            "content": ["# Example Domain\n\nTest paragraph"],
         }
 
 
-class MockCreateScheduledJobInput(BaseModel):
-    job_name: str = Field(description="Test job name")
-    service_type: str = Field(description="Test service type")
-    cron_expression: str = Field(description="Test cron expression")
-    job_config: Dict[str, Any] = Field(description="Test job config")
-    is_active: bool = Field(default=True, description="Test active status")
+class MockCrawlStartInput(BaseModel):
+    url: str = Field(description="Test URL")
+    depth: int = Field(default=2, description="Crawl depth")
+    max_pages: int = Field(default=10, description="Max pages")
+    format: str = Field(default="markdown", description="Output format")
 
 
-class MockCreateScheduledJobTool(BaseTool):
-    name: str = "CreateScheduledJob"
+class MockCrawlStartTool(BaseTool):
+    name: str = "CrawlStart"
     description: str = "Test description"
-    args_schema: type[BaseModel] = MockCreateScheduledJobInput
+    args_schema: type[BaseModel] = MockCrawlStartInput
     client: Optional[MockClient] = None
     api_key: str
 
     def _run(self, **kwargs: Any) -> Dict:
         return {
-            "id": "test-job-id-123",
-            "job_name": kwargs.get("job_name", "Test Job"),
-            "service_type": kwargs.get("service_type", "smartscraper"),
-            "cron_expression": kwargs.get("cron_expression", "0 9 * * *"),
-            "job_config": kwargs.get("job_config", {}),
-            "is_active": kwargs.get("is_active", True),
-            "created_at": "2024-01-01T00:00:00Z",
-            "next_run_at": "2024-01-02T09:00:00Z",
+            "id": "crawl-job-123",
+            "status": "running",
+            "url": kwargs.get("url", "https://example.com"),
         }
 
 
-class MockGetScheduledJobsInput(BaseModel):
-    page: int = Field(default=1, description="Test page")
-    page_size: int = Field(default=10, description="Test page size")
-    service_type: Optional[str] = Field(default=None, description="Test service type")
-    is_active: Optional[bool] = Field(default=None, description="Test active status")
+class MockMonitorCreateInput(BaseModel):
+    name: str = Field(description="Monitor name")
+    url: str = Field(description="Monitor URL")
+    prompt: str = Field(description="Monitor prompt")
+    cron: str = Field(description="Cron expression")
 
 
-class MockGetScheduledJobsTool(BaseTool):
-    name: str = "GetScheduledJobs"
+class MockMonitorCreateTool(BaseTool):
+    name: str = "MonitorCreate"
     description: str = "Test description"
-    args_schema: type[BaseModel] = MockGetScheduledJobsInput
+    args_schema: type[BaseModel] = MockMonitorCreateInput
     client: Optional[MockClient] = None
     api_key: str
 
     def _run(self, **kwargs: Any) -> Dict:
-        jobs = [
-            {
-                "id": "test-job-1",
-                "job_name": "Test Job 1",
-                "service_type": "smartscraper",
-                "cron_expression": "0 9 * * *",
-                "is_active": True,
-                "created_at": "2024-01-01T00:00:00Z",
-                "next_run_at": "2024-01-02T09:00:00Z",
-            }
-        ]
-        return {"jobs": jobs, "total": len(jobs), "page": 1, "page_size": 10}
+        return {
+            "id": "monitor-123",
+            "name": kwargs.get("name", "Test Monitor"),
+            "url": kwargs.get("url", "https://example.com"),
+            "status": "active",
+        }

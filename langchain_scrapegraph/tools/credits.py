@@ -27,31 +27,17 @@ class GetCreditsTool(BaseTool):
 
             export SGAI_API_KEY="your-api-key"
 
-    Key init args:
-        api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
-        client: Optional pre-configured ScrapeGraph client instance.
-
     Instantiate:
         .. code-block:: python
 
             from langchain_scrapegraph.tools import GetCreditsTool
 
-            # Will automatically get SGAI_API_KEY from environment
             tool = GetCreditsTool()
-
-            # Or provide API key directly
-            tool = GetCreditsTool(api_key="your-api-key")
 
     Use the tool:
         .. code-block:: python
 
             result = tool.invoke({})
-
-            print(result)
-            # {
-            #     "remaining_credits": 100,
-            #     "total_credits_used": 50
-            # }
 
     Async usage:
         .. code-block:: python
@@ -70,7 +56,6 @@ class GetCreditsTool(BaseTool):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        """Validate that api key exists in environment."""
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
         values["client"] = Client(api_key=values["api_key"])
         return values
@@ -79,14 +64,12 @@ class GetCreditsTool(BaseTool):
         super().__init__(**data)
 
     def _run(self, run_manager: Optional[CallbackManagerForToolRun] = None) -> dict:
-        """Get the available credits."""
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.get_credits()
+        return self.client.credits()
 
     async def _arun(
         self,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> int:
-        """Get the available credits asynchronously."""
+    ) -> dict:
         return self._run(run_manager=run_manager.get_sync() if run_manager else None)
