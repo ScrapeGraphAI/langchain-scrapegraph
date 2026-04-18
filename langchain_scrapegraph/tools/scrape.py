@@ -7,21 +7,27 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
-from scrapegraph_py import Client
+from scrapegraph_py import ScrapeGraphAI, ScrapeRequest
+
+from langchain_scrapegraph._utils import format_config, result_to_dict
 
 
 class ScrapeInput(BaseModel):
     url: str = Field(description="URL of the website to scrape")
     format: str = Field(
         default="markdown",
-        description="Output format: 'markdown', 'html', 'screenshot', or 'branding'",
+        description=(
+            "Output format: 'markdown', 'html', 'screenshot', 'branding', "
+            "'links', 'images', or 'summary'"
+        ),
     )
 
 
 class ScrapeTool(BaseTool):
     """Tool for scraping web pages using ScrapeGraph AI v2 API.
 
-    Returns content in the specified format (markdown, html, screenshot, or branding).
+    Returns content in the specified format (markdown, html, screenshot, branding,
+    links, images, or summary).
 
     Setup:
         Install ``langchain-scrapegraph`` python package:
@@ -39,7 +45,7 @@ class ScrapeTool(BaseTool):
 
     Key init args:
         api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
-        client: Optional pre-configured ScrapeGraph client instance.
+        client: Optional pre-configured ScrapeGraphAI client instance.
 
     Instantiate:
         .. code-block:: python
@@ -51,40 +57,31 @@ class ScrapeTool(BaseTool):
     Use the tool:
         .. code-block:: python
 
-            # Get markdown content
-            result = tool.invoke({
-                "url": "https://example.com"
-            })
+            result = tool.invoke({"url": "https://example.com"})
 
-            # Get HTML content
-            result = tool.invoke({
-                "url": "https://example.com",
-                "format": "html"
-            })
+            result = tool.invoke({"url": "https://example.com", "format": "html"})
 
     Async usage:
         .. code-block:: python
 
-            result = await tool.ainvoke({
-                "url": "https://example.com"
-            })
+            result = await tool.ainvoke({"url": "https://example.com"})
     """
 
     name: str = "Scrape"
     description: str = (
         "Scrape a web page and return its content in the specified format "
-        "(markdown, html, screenshot, or branding)."
+        "(markdown, html, screenshot, branding, links, images, or summary)."
     )
     args_schema: Type[BaseModel] = ScrapeInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
+        values["client"] = ScrapeGraphAI(api_key=values["api_key"])
         return values
 
     def __init__(self, **data: Any):
@@ -95,19 +92,19 @@ class ScrapeTool(BaseTool):
         url: str,
         format: str = "markdown",
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
 
-        response = self.client.scrape(url=url, format=format)
-        return response
+        request = ScrapeRequest(url=url, formats=[format_config(format)])
+        return result_to_dict(self.client.scrape(request))
 
     async def _arun(
         self,
         url: str,
         format: str = "markdown",
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             url=url,
             format=format,

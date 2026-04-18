@@ -7,7 +7,9 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
-from scrapegraph_py import Client
+from scrapegraph_py import ExtractRequest, ScrapeGraphAI
+
+from langchain_scrapegraph._utils import result_to_dict
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -38,7 +40,7 @@ class ExtractTool(BaseTool):
 
     Key init args:
         api_key: Your ScrapeGraph AI API key. If not provided, will look for SGAI_API_KEY env var.
-        client: Optional pre-configured ScrapeGraph client instance.
+        client: Optional pre-configured ScrapeGraphAI client instance.
         llm_output_schema: Optional Pydantic model class to structure the output.
 
     Instantiate:
@@ -48,7 +50,6 @@ class ExtractTool(BaseTool):
 
             tool = ExtractTool()
 
-            # With output schema:
             from pydantic import BaseModel, Field
 
             class WebsiteInfo(BaseModel):
@@ -62,7 +63,7 @@ class ExtractTool(BaseTool):
 
             result = tool.invoke({
                 "url": "https://example.com",
-                "prompt": "Extract the main heading and first paragraph"
+                "prompt": "Extract the main heading and first paragraph",
             })
 
     Async usage:
@@ -70,7 +71,7 @@ class ExtractTool(BaseTool):
 
             result = await tool.ainvoke({
                 "url": "https://example.com",
-                "prompt": "Extract the main heading"
+                "prompt": "Extract the main heading",
             })
     """
 
@@ -80,7 +81,7 @@ class ExtractTool(BaseTool):
     )
     args_schema: Type[BaseModel] = ExtractInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
     llm_output_schema: Optional[Type[BaseModel]] = None
 
@@ -88,7 +89,7 @@ class ExtractTool(BaseTool):
     @classmethod
     def validate_environment(cls: Type[T], values: Dict[str, Any]) -> Dict[str, Any]:
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
+        values["client"] = ScrapeGraphAI(api_key=values["api_key"])
         return values
 
     def __init__(self, **data: Any):
@@ -103,12 +104,13 @@ class ExtractTool(BaseTool):
         if not self.client:
             raise ValueError("Client not initialized")
 
-        response = self.client.extract(
-            url=url,
-            prompt=prompt,
-            output_schema=self.llm_output_schema,
+        schema = (
+            self.llm_output_schema.model_json_schema()
+            if self.llm_output_schema
+            else None
         )
-        return response
+        request = ExtractRequest(url=url, prompt=prompt, schema=schema)
+        return result_to_dict(self.client.extract(request))
 
     async def _arun(
         self,

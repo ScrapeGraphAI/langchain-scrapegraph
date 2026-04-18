@@ -7,19 +7,18 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
-from scrapegraph_py import Client
+from scrapegraph_py import HistoryFilter, ScrapeGraphAI
+
+from langchain_scrapegraph._utils import result_to_dict
 
 
 class HistoryInput(BaseModel):
-    endpoint: Optional[str] = Field(
+    service: Optional[str] = Field(
         default=None,
-        description="Filter by endpoint name (e.g. 'scrape', 'extract', 'search')",
+        description="Filter by service name ('scrape', 'extract', 'search', 'monitor', 'crawl')",
     )
-    status: Optional[str] = Field(default=None, description="Filter by request status")
-    limit: Optional[int] = Field(
-        default=None, description="Maximum number of results (1-100)"
-    )
-    offset: Optional[int] = Field(default=None, description="Number of results to skip")
+    page: int = Field(default=1, description="Page number (starts at 1)")
+    limit: int = Field(default=20, description="Number of results per page (1-100)")
 
 
 class HistoryTool(BaseTool):
@@ -27,18 +26,18 @@ class HistoryTool(BaseTool):
 
     name: str = "History"
     description: str = (
-        "Retrieve your ScrapeGraph AI request history with optional filters."
+        "Retrieve your ScrapeGraph AI request history with optional service filter and pagination."
     )
     args_schema: Type[BaseModel] = HistoryInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
+        values["client"] = ScrapeGraphAI(api_key=values["api_key"])
         return values
 
     def __init__(self, **data: Any):
@@ -46,34 +45,27 @@ class HistoryTool(BaseTool):
 
     def _run(
         self,
-        endpoint: Optional[str] = None,
-        status: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        service: Optional[str] = None,
+        page: int = 1,
+        limit: int = 20,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
 
-        return self.client.history(
-            endpoint=endpoint,
-            status=status,
-            limit=limit,
-            offset=offset,
-        )
+        history_filter = HistoryFilter(page=page, limit=limit, service=service)
+        return result_to_dict(self.client.history.list(history_filter))
 
     async def _arun(
         self,
-        endpoint: Optional[str] = None,
-        status: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        service: Optional[str] = None,
+        page: int = 1,
+        limit: int = 20,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
-            endpoint=endpoint,
-            status=status,
+            service=service,
+            page=page,
             limit=limit,
-            offset=offset,
             run_manager=run_manager.get_sync() if run_manager else None,
         )

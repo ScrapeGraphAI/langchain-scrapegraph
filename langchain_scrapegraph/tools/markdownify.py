@@ -7,7 +7,9 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
-from scrapegraph_py import Client
+from scrapegraph_py import MarkdownFormatConfig, ScrapeGraphAI, ScrapeRequest
+
+from langchain_scrapegraph._utils import result_to_dict
 
 
 class MarkdownifyInput(BaseModel):
@@ -15,9 +17,9 @@ class MarkdownifyInput(BaseModel):
 
 
 class MarkdownifyTool(BaseTool):
-    """Tool for converting webpages to Markdown format using ScrapeGraph AI.
+    """Tool for converting webpages to Markdown format using ScrapeGraph AI v2 API.
 
-    In v2, this uses the scrape endpoint with format='markdown'.
+    Under the hood this calls the ``scrape`` endpoint with ``MarkdownFormatConfig``.
 
     Setup:
         Install ``langchain-scrapegraph`` python package:
@@ -43,16 +45,12 @@ class MarkdownifyTool(BaseTool):
     Use the tool:
         .. code-block:: python
 
-            result = tool.invoke({
-                "website_url": "https://example.com"
-            })
+            result = tool.invoke({"website_url": "https://example.com"})
 
     Async usage:
         .. code-block:: python
 
-            result = await tool.ainvoke({
-                "website_url": "https://example.com"
-            })
+            result = await tool.ainvoke({"website_url": "https://example.com"})
     """
 
     name: str = "Markdownify"
@@ -61,14 +59,14 @@ class MarkdownifyTool(BaseTool):
     )
     args_schema: Type[BaseModel] = MarkdownifyInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
+        values["client"] = ScrapeGraphAI(api_key=values["api_key"])
         return values
 
     def __init__(self, **data: Any):
@@ -78,17 +76,18 @@ class MarkdownifyTool(BaseTool):
         self,
         website_url: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        response = self.client.scrape(url=website_url, format="markdown")
-        return response
+
+        request = ScrapeRequest(url=website_url, formats=[MarkdownFormatConfig()])
+        return result_to_dict(self.client.scrape(request))
 
     async def _arun(
         self,
         website_url: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             website_url,
             run_manager=run_manager.get_sync() if run_manager else None,

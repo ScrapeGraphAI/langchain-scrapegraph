@@ -31,7 +31,7 @@ class TestExtractToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.extract.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.extract.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -44,7 +44,7 @@ class TestExtractToolUnit(ToolsUnitTests):
 
 class TestExtractToolCustom:
     def test_invoke_basic(self):
-        with patch("langchain_scrapegraph.tools.extract.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.extract.ScrapeGraphAI", MockClient):
             tool = MockExtractTool(api_key="sgai-test-api-key")
             result = tool.invoke(
                 {
@@ -63,7 +63,7 @@ class TestSearchToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.search.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.search.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -75,7 +75,7 @@ class TestSearchToolUnit(ToolsUnitTests):
 
 class TestSearchToolCustom:
     def test_invoke_with_num_results(self):
-        with patch("langchain_scrapegraph.tools.search.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.search.ScrapeGraphAI", MockClient):
             tool = MockSearchTool(api_key="sgai-test-api-key")
             result = tool.invoke({"query": "AI news", "num_results": 10})
             assert isinstance(result, dict)
@@ -89,7 +89,7 @@ class TestGetCreditsToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.credits.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.credits.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -104,7 +104,7 @@ class TestMarkdownifyToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.markdownify.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.markdownify.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -119,7 +119,7 @@ class TestScrapeToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.scrape.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.scrape.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -129,11 +129,11 @@ class TestScrapeToolUnit(ToolsUnitTests):
 
 class TestScrapeToolCustom:
     def test_invoke_with_html_format(self):
-        with patch("langchain_scrapegraph.tools.scrape.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.scrape.ScrapeGraphAI", MockClient):
             tool = MockScrapeTool(api_key="sgai-test-api-key")
             result = tool.invoke({"url": "https://example.com", "format": "html"})
             assert isinstance(result, dict)
-            assert "content" in result
+            assert "results" in result
 
 
 class TestCrawlStartToolUnit(ToolsUnitTests):
@@ -143,24 +143,24 @@ class TestCrawlStartToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.crawl.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.crawl.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
             "url": "https://example.com",
-            "depth": 2,
+            "max_depth": 2,
             "max_pages": 10,
         }
 
 
 class TestCrawlStartToolCustom:
     def test_invoke_basic(self):
-        with patch("langchain_scrapegraph.tools.crawl.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.crawl.ScrapeGraphAI", MockClient):
             tool = MockCrawlStartTool(api_key="sgai-test-api-key")
             result = tool.invoke(
-                {"url": "https://example.com", "depth": 3, "max_pages": 5}
+                {"url": "https://example.com", "max_depth": 3, "max_pages": 5}
             )
             assert isinstance(result, dict)
             assert "id" in result
@@ -174,29 +174,27 @@ class TestMonitorCreateToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.monitor.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.monitor.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
-            "name": "Test Monitor",
             "url": "https://example.com",
-            "prompt": "Extract product prices",
-            "cron": "0 9 * * *",
+            "interval": "0 9 * * *",
+            "name": "Test Monitor",
         }
 
 
 class TestMonitorCreateToolCustom:
     def test_create_monitor(self):
-        with patch("langchain_scrapegraph.tools.monitor.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.monitor.ScrapeGraphAI", MockClient):
             tool = MockMonitorCreateTool(api_key="sgai-test-api-key")
             result = tool.invoke(
                 {
                     "name": "Price Monitor",
                     "url": "https://example.com",
-                    "prompt": "Extract product prices",
-                    "cron": "0 9 * * *",
+                    "interval": "1h",
                 }
             )
             assert isinstance(result, dict)

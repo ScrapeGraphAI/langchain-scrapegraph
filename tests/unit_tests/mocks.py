@@ -1,173 +1,248 @@
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
 
-class MockCrawlNamespace:
-    def __init__(self, client):
+def _api_result(data: dict) -> dict:
+    return {"status": "success", "data": data, "error": None, "elapsed_ms": 0}
+
+
+class _HasModelDump:
+    def __init__(self, payload: dict) -> None:
+        self._payload = payload
+
+    def model_dump(self, **_kwargs: Any) -> dict:
+        return self._payload
+
+
+class MockCrawlResource:
+    def __init__(self, client: "MockClient") -> None:
         self._client = client
 
-    def start(
-        self,
-        url: str,
-        depth: int = 2,
-        max_pages: int = 10,
-        format: str = "markdown",
-        include_patterns: Optional[List[str]] = None,
-        exclude_patterns: Optional[List[str]] = None,
-        fetch_config=None,
-    ) -> dict:
-        return {
-            "id": "crawl-job-123",
-            "status": "running",
-            "url": url,
-            "depth": depth,
-            "max_pages": max_pages,
-        }
+    def start(self, request: Any) -> Any:
+        params = (
+            request.model_dump(by_alias=False)
+            if hasattr(request, "model_dump")
+            else dict(request)
+        )
+        return _HasModelDump(
+            _api_result(
+                {
+                    "id": "crawl-job-123",
+                    "status": "running",
+                    "url": str(params.get("url", "")),
+                    "max_depth": params.get("max_depth", 2),
+                    "max_pages": params.get("max_pages", 50),
+                }
+            )
+        )
 
-    def status(self, crawl_id: str) -> dict:
-        return {
-            "id": crawl_id,
-            "status": "completed",
-            "pages_crawled": 5,
-            "results": [{"url": "https://example.com", "content": "# Example"}],
-        }
+    def get(self, crawl_id: str) -> Any:
+        return _HasModelDump(
+            _api_result(
+                {
+                    "id": crawl_id,
+                    "status": "completed",
+                    "total": 5,
+                    "finished": 5,
+                    "pages": [{"url": "https://example.com", "status": "completed"}],
+                }
+            )
+        )
 
-    def stop(self, crawl_id: str) -> dict:
-        return {"id": crawl_id, "status": "stopped"}
+    def stop(self, crawl_id: str) -> Any:
+        return _HasModelDump(_api_result({"id": crawl_id, "status": "stopped"}))
 
-    def resume(self, crawl_id: str) -> dict:
-        return {"id": crawl_id, "status": "running"}
+    def resume(self, crawl_id: str) -> Any:
+        return _HasModelDump(_api_result({"id": crawl_id, "status": "running"}))
 
 
-class MockMonitorNamespace:
-    def __init__(self, client):
+class MockMonitorResource:
+    def __init__(self, client: "MockClient") -> None:
         self._client = client
 
-    def create(
-        self,
-        name: str,
-        url: str,
-        prompt: str,
-        cron: str,
-        output_schema=None,
-        fetch_config=None,
-        llm_config=None,
-    ) -> dict:
-        return {
-            "id": "monitor-123",
-            "name": name,
-            "url": url,
-            "prompt": prompt,
-            "cron": cron,
-            "status": "active",
-        }
-
-    def list(self) -> dict:
-        return {
-            "monitors": [
+    def create(self, request: Any) -> Any:
+        params = (
+            request.model_dump(by_alias=False)
+            if hasattr(request, "model_dump")
+            else dict(request)
+        )
+        return _HasModelDump(
+            _api_result(
                 {
                     "id": "monitor-123",
+                    "name": params.get("name"),
+                    "url": str(params.get("url", "")),
+                    "interval": params.get("interval"),
+                    "status": "active",
+                }
+            )
+        )
+
+    def list(self) -> Any:
+        return _HasModelDump(
+            _api_result(
+                [
+                    {
+                        "id": "monitor-123",
+                        "name": "Test Monitor",
+                        "url": "https://example.com",
+                        "status": "active",
+                    }
+                ]
+            )
+        )
+
+    def get(self, monitor_id: str) -> Any:
+        return _HasModelDump(
+            _api_result(
+                {
+                    "id": monitor_id,
                     "name": "Test Monitor",
                     "url": "https://example.com",
                     "status": "active",
                 }
-            ]
-        }
+            )
+        )
 
-    def get(self, monitor_id: str) -> dict:
-        return {
-            "id": monitor_id,
-            "name": "Test Monitor",
-            "url": "https://example.com",
-            "status": "active",
-        }
+    def pause(self, monitor_id: str) -> Any:
+        return _HasModelDump(_api_result({"id": monitor_id, "status": "paused"}))
 
-    def pause(self, monitor_id: str) -> dict:
-        return {"id": monitor_id, "status": "paused"}
+    def resume(self, monitor_id: str) -> Any:
+        return _HasModelDump(_api_result({"id": monitor_id, "status": "active"}))
 
-    def resume(self, monitor_id: str) -> dict:
-        return {"id": monitor_id, "status": "active"}
+    def delete(self, monitor_id: str) -> Any:
+        return _HasModelDump(_api_result({"id": monitor_id, "deleted": True}))
 
-    def delete(self, monitor_id: str) -> dict:
-        return {"message": "Monitor deleted successfully", "id": monitor_id}
+
+class MockHistoryResource:
+    def __init__(self, client: "MockClient") -> None:
+        self._client = client
+
+    def list(self, filter: Any) -> Any:
+        return _HasModelDump(
+            _api_result(
+                {
+                    "data": [
+                        {
+                            "id": "req-123",
+                            "service": "scrape",
+                            "status": "completed",
+                            "created_at": "2024-01-01T00:00:00Z",
+                        }
+                    ],
+                    "pagination": {"page": 1, "limit": 20, "total": 1},
+                }
+            )
+        )
+
+    def get(self, entry_id: str) -> Any:
+        return _HasModelDump(
+            _api_result(
+                {
+                    "id": entry_id,
+                    "service": "scrape",
+                    "status": "completed",
+                }
+            )
+        )
 
 
 class MockClient:
-    def __init__(self, api_key: str = None, *args, **kwargs):
+    def __init__(self, *, api_key: Optional[str] = None, **_kwargs: Any) -> None:
         self._api_key = api_key
-        self.crawl = MockCrawlNamespace(self)
-        self.monitor = MockMonitorNamespace(self)
+        self.crawl = MockCrawlResource(self)
+        self.monitor = MockMonitorResource(self)
+        self.history = MockHistoryResource(self)
 
-    def extract(
-        self,
-        url: str,
-        prompt: str,
-        output_schema=None,
-        fetch_config=None,
-        llm_config=None,
-    ) -> dict:
-        return {
-            "id": "test-id",
-            "data": {
-                "main_heading": "Example Domain",
-                "first_paragraph": "Test paragraph",
-            },
-        }
-
-    def search(
-        self,
-        query: str,
-        num_results: int = 5,
-        output_schema=None,
-        llm_config=None,
-    ) -> dict:
-        return {
-            "id": "test-id",
-            "results": [
+    def scrape(self, request: Any) -> Any:
+        params = (
+            request.model_dump(by_alias=False)
+            if hasattr(request, "model_dump")
+            else dict(request)
+        )
+        formats = params.get("formats") or []
+        first = formats[0] if formats else {"type": "markdown"}
+        if isinstance(first, dict):
+            fmt = first.get("type", "markdown")
+        else:
+            fmt = getattr(first, "type", "markdown")
+        body = (
+            {"markdown": "# Example Domain\n"}
+            if fmt == "markdown"
+            else {fmt: "<html><body><h1>Example Domain</h1></body></html>"}
+        )
+        return _HasModelDump(
+            _api_result(
                 {
-                    "title": "Test Result",
-                    "url": "https://example.com",
-                    "content": "Test content",
+                    "results": body,
+                    "metadata": {"provider": "mock", "content_type": "text/html"},
                 }
-            ],
-        }
+            )
+        )
 
-    def scrape(self, url: str, format: str = "markdown", fetch_config=None) -> dict:
-        if format == "html":
-            return {
-                "id": "test-id",
-                "format": "html",
-                "content": ["<html><body><h1>Example Domain</h1></body></html>"],
-            }
-        return {
-            "id": "test-id",
-            "format": "markdown",
-            "content": ["# Example Domain\n\nTest paragraph"],
-        }
-
-    def credits(self) -> dict:
-        return {"remaining_credits": 50, "total_credits_used": 543}
-
-    def history(
-        self,
-        endpoint: str = None,
-        status: str = None,
-        limit: int = None,
-        offset: int = None,
-    ) -> dict:
-        return {
-            "requests": [
+    def extract(self, request: Any) -> Any:
+        params = (
+            request.model_dump(by_alias=False)
+            if hasattr(request, "model_dump")
+            else dict(request)
+        )
+        return _HasModelDump(
+            _api_result(
                 {
-                    "id": "req-123",
-                    "endpoint": "scrape",
-                    "status": "completed",
-                    "created_at": "2024-01-01T00:00:00Z",
+                    "raw": None,
+                    "json": {
+                        "main_heading": "Example Domain",
+                        "first_paragraph": "Test paragraph",
+                    },
+                    "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+                    "metadata": {"prompt": params.get("prompt")},
                 }
-            ],
-            "total": 1,
-        }
+            )
+        )
+
+    def search(self, request: Any) -> Any:
+        params = (
+            request.model_dump(by_alias=False)
+            if hasattr(request, "model_dump")
+            else dict(request)
+        )
+        return _HasModelDump(
+            _api_result(
+                {
+                    "results": [
+                        {
+                            "url": "https://example.com",
+                            "title": "Test Result",
+                            "content": "Test content",
+                        }
+                    ],
+                    "metadata": {
+                        "search": {"query": params.get("query")},
+                        "pages": {"count": 1},
+                    },
+                }
+            )
+        )
+
+    def credits(self) -> Any:
+        return _HasModelDump(
+            _api_result(
+                {
+                    "remaining": 50,
+                    "used": 543,
+                    "plan": "pro",
+                    "jobs": {
+                        "crawl": {"used": 0, "limit": 10},
+                        "monitor": {"used": 0, "limit": 10},
+                    },
+                }
+            )
+        )
+
+    def health(self) -> Any:
+        return _HasModelDump(_api_result({"status": "ok", "uptime": 1}))
 
     def close(self) -> None:
         pass
@@ -191,7 +266,7 @@ class MockExtractTool(BaseTool):
 
 class MockSearchInput(BaseModel):
     query: str = Field(description="Test query")
-    num_results: int = Field(default=5, description="Number of results")
+    num_results: int = Field(default=3, description="Number of results")
 
 
 class MockSearchTool(BaseTool):
@@ -221,7 +296,7 @@ class MockGetCreditsTool(BaseTool):
     api_key: str
 
     def _run(self, **kwargs: Any) -> Dict:
-        return {"remaining_credits": 50, "total_credits_used": 543}
+        return {"remaining": 50, "used": 543}
 
 
 class MockMarkdownifyInput(BaseModel):
@@ -236,11 +311,7 @@ class MockMarkdownifyTool(BaseTool):
     api_key: str
 
     def _run(self, **kwargs: Any) -> Dict:
-        return {
-            "id": "test-id",
-            "format": "markdown",
-            "content": ["# Example Domain\n\nTest paragraph"],
-        }
+        return {"results": {"markdown": "# Example Domain\n"}}
 
 
 class MockScrapeInput(BaseModel):
@@ -256,17 +327,17 @@ class MockScrapeTool(BaseTool):
     api_key: str
 
     def _run(self, **kwargs: Any) -> Dict:
-        return {
-            "id": "test-id",
-            "format": "markdown",
-            "content": ["# Example Domain\n\nTest paragraph"],
-        }
+        fmt = kwargs.get("format", "markdown")
+        body = (
+            {"markdown": "# Example Domain\n"} if fmt == "markdown" else {fmt: "data"}
+        )
+        return {"results": body}
 
 
 class MockCrawlStartInput(BaseModel):
     url: str = Field(description="Test URL")
-    depth: int = Field(default=2, description="Crawl depth")
-    max_pages: int = Field(default=10, description="Max pages")
+    max_depth: int = Field(default=2, description="Crawl depth")
+    max_pages: int = Field(default=50, description="Max pages")
     format: str = Field(default="markdown", description="Output format")
 
 
@@ -286,10 +357,10 @@ class MockCrawlStartTool(BaseTool):
 
 
 class MockMonitorCreateInput(BaseModel):
-    name: str = Field(description="Monitor name")
     url: str = Field(description="Monitor URL")
-    prompt: str = Field(description="Monitor prompt")
-    cron: str = Field(description="Cron expression")
+    interval: str = Field(description="Monitor interval")
+    name: Optional[str] = Field(default=None, description="Monitor name")
+    prompt: Optional[str] = Field(default=None, description="Monitor prompt")
 
 
 class MockMonitorCreateTool(BaseTool):

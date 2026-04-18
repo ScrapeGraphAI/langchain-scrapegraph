@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
@@ -7,18 +7,38 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, Field, model_validator
-from scrapegraph_py import Client
+from scrapegraph_py import MonitorCreateRequest, ScrapeGraphAI
+
+from langchain_scrapegraph._utils import (
+    format_config,
+    json_format_config,
+    result_to_dict,
+)
 
 
 class MonitorCreateInput(BaseModel):
-    name: str = Field(description="Name of the monitor")
     url: str = Field(description="URL to monitor")
-    prompt: str = Field(description="Prompt for AI extraction")
-    cron: str = Field(
-        description="Cron expression for scheduling (e.g., '0 9 * * *' for daily at 9 AM)"
+    interval: str = Field(
+        description="Monitor interval (e.g. '1h', '30m', or a cron expression)"
+    )
+    name: Optional[str] = Field(default=None, description="Name of the monitor")
+    prompt: Optional[str] = Field(
+        default=None,
+        description="Optional prompt for AI-driven JSON extraction on each tick",
     )
     output_schema: Optional[Dict[str, Any]] = Field(
-        default=None, description="Optional JSON Schema for structured output"
+        default=None,
+        description="Optional JSON Schema for structured output (requires prompt)",
+    )
+    formats: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "List of non-json formats to capture (markdown, html, links, images, "
+            "summary, branding, screenshot). Defaults to ['markdown']."
+        ),
+    )
+    webhook_url: Optional[str] = Field(
+        default=None, description="Optional webhook URL to notify on changes"
     )
 
 
@@ -26,64 +46,79 @@ class MonitorIdInput(BaseModel):
     monitor_id: str = Field(description="The monitor ID")
 
 
+def _make_client(values: Dict) -> Dict:
+    values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
+    values["client"] = ScrapeGraphAI(api_key=values["api_key"])
+    return values
+
+
 class MonitorCreateTool(BaseTool):
     """Tool for creating a monitor using ScrapeGraph AI v2 API."""
 
     name: str = "MonitorCreate"
     description: str = (
-        "Create a new monitor that automatically extracts data from a URL on a schedule."
+        "Create a new monitor that automatically scrapes a URL on a schedule "
+        "and reports changes."
     )
     args_schema: Type[BaseModel] = MonitorCreateInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
 
     def _run(
         self,
-        name: str,
         url: str,
-        prompt: str,
-        cron: str,
+        interval: str,
+        name: Optional[str] = None,
+        prompt: Optional[str] = None,
         output_schema: Optional[Dict[str, Any]] = None,
+        formats: Optional[List[str]] = None,
+        webhook_url: Optional[str] = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
 
-        response = self.client.monitor.create(
-            name=name,
+        format_entries = [format_config(f) for f in (formats or ["markdown"])]
+        if prompt:
+            format_entries.append(json_format_config(prompt, output_schema))
+
+        request = MonitorCreateRequest(
             url=url,
-            prompt=prompt,
-            cron=cron,
-            output_schema=output_schema,
+            name=name,
+            interval=interval,
+            formats=format_entries,
+            webhook_url=webhook_url,
         )
-        return response
+        return result_to_dict(self.client.monitor.create(request))
 
     async def _arun(
         self,
-        name: str,
         url: str,
-        prompt: str,
-        cron: str,
+        interval: str,
+        name: Optional[str] = None,
+        prompt: Optional[str] = None,
         output_schema: Optional[Dict[str, Any]] = None,
+        formats: Optional[List[str]] = None,
+        webhook_url: Optional[str] = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
-            name=name,
             url=url,
+            interval=interval,
+            name=name,
             prompt=prompt,
-            cron=cron,
             output_schema=output_schema,
+            formats=formats,
+            webhook_url=webhook_url,
             run_manager=run_manager.get_sync() if run_manager else None,
         )
 
@@ -94,15 +129,13 @@ class MonitorListTool(BaseTool):
     name: str = "MonitorList"
     description: str = "List all monitors in your ScrapeGraph AI account."
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -110,15 +143,15 @@ class MonitorListTool(BaseTool):
     def _run(
         self,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.monitor.list()
+        return result_to_dict(self.client.monitor.list())
 
     async def _arun(
         self,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(run_manager=run_manager.get_sync() if run_manager else None)
 
 
@@ -129,15 +162,13 @@ class MonitorGetTool(BaseTool):
     description: str = "Get details of a specific monitor by its ID."
     args_schema: Type[BaseModel] = MonitorIdInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -146,16 +177,16 @@ class MonitorGetTool(BaseTool):
         self,
         monitor_id: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.monitor.get(monitor_id)
+        return result_to_dict(self.client.monitor.get(monitor_id))
 
     async def _arun(
         self,
         monitor_id: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             monitor_id=monitor_id,
             run_manager=run_manager.get_sync() if run_manager else None,
@@ -169,15 +200,13 @@ class MonitorPauseTool(BaseTool):
     description: str = "Pause a monitor so it stops running until resumed."
     args_schema: Type[BaseModel] = MonitorIdInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -186,16 +215,16 @@ class MonitorPauseTool(BaseTool):
         self,
         monitor_id: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.monitor.pause(monitor_id)
+        return result_to_dict(self.client.monitor.pause(monitor_id))
 
     async def _arun(
         self,
         monitor_id: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             monitor_id=monitor_id,
             run_manager=run_manager.get_sync() if run_manager else None,
@@ -209,15 +238,13 @@ class MonitorResumeTool(BaseTool):
     description: str = "Resume a paused monitor so it starts running again."
     args_schema: Type[BaseModel] = MonitorIdInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -226,16 +253,16 @@ class MonitorResumeTool(BaseTool):
         self,
         monitor_id: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.monitor.resume(monitor_id)
+        return result_to_dict(self.client.monitor.resume(monitor_id))
 
     async def _arun(
         self,
         monitor_id: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             monitor_id=monitor_id,
             run_manager=run_manager.get_sync() if run_manager else None,
@@ -249,15 +276,13 @@ class MonitorDeleteTool(BaseTool):
     description: str = "Delete a monitor permanently."
     args_schema: Type[BaseModel] = MonitorIdInput
     return_direct: bool = True
-    client: Optional[Client] = None
+    client: Optional[ScrapeGraphAI] = None
     api_key: str
 
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        values["api_key"] = get_from_dict_or_env(values, "api_key", "SGAI_API_KEY")
-        values["client"] = Client(api_key=values["api_key"])
-        return values
+        return _make_client(values)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -266,16 +291,16 @@ class MonitorDeleteTool(BaseTool):
         self,
         monitor_id: str,
         run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not self.client:
             raise ValueError("Client not initialized")
-        return self.client.monitor.delete(monitor_id)
+        return result_to_dict(self.client.monitor.delete(monitor_id))
 
     async def _arun(
         self,
         monitor_id: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         return self._run(
             monitor_id=monitor_id,
             run_manager=run_manager.get_sync() if run_manager else None,
