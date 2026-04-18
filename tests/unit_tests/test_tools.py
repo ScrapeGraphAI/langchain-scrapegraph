@@ -4,101 +4,82 @@ from unittest.mock import patch
 from langchain_tests.unit_tests import ToolsUnitTests
 
 from langchain_scrapegraph.tools import (
-    CreateScheduledJobTool,
+    CrawlStartTool,
+    ExtractTool,
     GetCreditsTool,
-    GetScheduledJobsTool,
     MarkdownifyTool,
+    MonitorCreateTool,
     ScrapeTool,
-    SearchScraperTool,
-    SmartScraperTool,
+    SearchTool,
 )
 from tests.unit_tests.mocks import (
     MockClient,
-    MockCreateScheduledJobTool,
+    MockCrawlStartTool,
+    MockExtractTool,
     MockGetCreditsTool,
-    MockGetScheduledJobsTool,
     MockMarkdownifyTool,
+    MockMonitorCreateTool,
     MockScrapeTool,
-    MockSearchScraperTool,
-    MockSmartScraperTool,
+    MockSearchTool,
 )
 
 
-class TestSmartScraperToolUnit(ToolsUnitTests):
+class TestExtractToolUnit(ToolsUnitTests):
     @property
-    def tool_constructor(self) -> Type[SmartScraperTool]:
-        return MockSmartScraperTool
+    def tool_constructor(self) -> Type[ExtractTool]:
+        return MockExtractTool
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.smartscraper.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.extract.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
-            "user_prompt": "Extract the main heading",
-            "website_url": "https://example.com",
+            "url": "https://example.com",
+            "prompt": "Extract the main heading",
         }
 
 
-class TestSmartScraperToolCustom:
-    def test_invoke_with_html(self):
-        """Test invoking the tool with HTML content."""
-        with patch("langchain_scrapegraph.tools.smartscraper.Client", MockClient):
-            tool = MockSmartScraperTool(api_key="sgai-test-api-key")
+class TestExtractToolCustom:
+    def test_invoke_basic(self):
+        with patch("langchain_scrapegraph.tools.extract.ScrapeGraphAI", MockClient):
+            tool = MockExtractTool(api_key="sgai-test-api-key")
             result = tool.invoke(
                 {
-                    "user_prompt": "Extract the main heading",
-                    "website_url": "https://example.com",
-                    "website_html": "<html><body><h1>Test</h1></body></html>",
+                    "url": "https://example.com",
+                    "prompt": "Extract the main heading",
                 }
             )
             assert isinstance(result, dict)
             assert "main_heading" in result
-            assert result["main_heading"] == "Test"
 
 
-class TestSearchScraperToolUnit(ToolsUnitTests):
+class TestSearchToolUnit(ToolsUnitTests):
     @property
-    def tool_constructor(self) -> Type[SearchScraperTool]:
-        return MockSearchScraperTool
+    def tool_constructor(self) -> Type[SearchTool]:
+        return MockSearchTool
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.searchscraper.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.search.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
-            "user_prompt": "What are the key features of Product X?",
+            "query": "What are the key features of Product X?",
         }
 
 
-class TestSearchScraperToolCustom:
-    def test_invoke_with_schema(self):
-        """Test invoking the tool with a schema."""
-        from typing import List
-
-        from pydantic import BaseModel, Field
-
-        class TestSchema(BaseModel):
-            product: dict = Field(description="Product information")
-            features: List[dict] = Field(description="List of features")
-            reference_urls: List[str] = Field(description="Reference URLs")
-
-        with patch("langchain_scrapegraph.tools.searchscraper.Client", MockClient):
-            tool = MockSearchScraperTool(api_key="sgai-test-api-key")
-            tool.llm_output_schema = TestSchema
-            result = tool.invoke(
-                {"user_prompt": "What are the key features of Product X?"}
-            )
+class TestSearchToolCustom:
+    def test_invoke_with_num_results(self):
+        with patch("langchain_scrapegraph.tools.search.ScrapeGraphAI", MockClient):
+            tool = MockSearchTool(api_key="sgai-test-api-key")
+            result = tool.invoke({"query": "AI news", "num_results": 10})
             assert isinstance(result, dict)
-            assert "product" in result
-            assert "features" in result
-            assert "reference_urls" in result
-            assert isinstance(result["reference_urls"], list)
+            assert "results" in result
 
 
 class TestGetCreditsToolUnit(ToolsUnitTests):
@@ -108,7 +89,7 @@ class TestGetCreditsToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.credits.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.credits.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -123,7 +104,7 @@ class TestMarkdownifyToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.markdownify.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.markdownify.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
@@ -138,136 +119,84 @@ class TestScrapeToolUnit(ToolsUnitTests):
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.scrape.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.scrape.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
-        return {"website_url": "https://example.com"}
+        return {"url": "https://example.com"}
 
 
 class TestScrapeToolCustom:
-    def test_invoke_with_js_rendering(self):
-        """Test invoking the scrape tool with JavaScript rendering."""
-        with patch("langchain_scrapegraph.tools.scrape.Client", MockClient):
+    def test_invoke_with_html_format(self):
+        with patch("langchain_scrapegraph.tools.scrape.ScrapeGraphAI", MockClient):
             tool = MockScrapeTool(api_key="sgai-test-api-key")
-            result = tool.invoke(
-                {"website_url": "https://example.com", "render_heavy_js": True}
-            )
+            result = tool.invoke({"url": "https://example.com", "format": "html"})
             assert isinstance(result, dict)
-            assert "html" in result
-            assert "scrape_request_id" in result
-            assert result["status"] == "success"
-
-    def test_invoke_with_headers(self):
-        """Test invoking the scrape tool with custom headers."""
-        with patch("langchain_scrapegraph.tools.scrape.Client", MockClient):
-            tool = MockScrapeTool(api_key="sgai-test-api-key")
-            result = tool.invoke(
-                {
-                    "website_url": "https://example.com",
-                    "headers": {"User-Agent": "Test Bot 1.0"},
-                }
-            )
-            assert isinstance(result, dict)
-            assert "html" in result
-            assert result["status"] == "success"
+            assert "results" in result
 
 
-class TestCreateScheduledJobToolUnit(ToolsUnitTests):
+class TestCrawlStartToolUnit(ToolsUnitTests):
     @property
-    def tool_constructor(self) -> Type[CreateScheduledJobTool]:
-        return MockCreateScheduledJobTool
+    def tool_constructor(self) -> Type[CrawlStartTool]:
+        return MockCrawlStartTool
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.scheduled_jobs.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.crawl.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
         return {
-            "job_name": "Test Job",
-            "service_type": "smartscraper",
-            "cron_expression": "0 9 * * *",
-            "job_config": {"website_url": "https://example.com", "user_prompt": "test"},
-            "is_active": True,
+            "url": "https://example.com",
+            "max_depth": 2,
+            "max_pages": 10,
         }
 
 
-class TestCreateScheduledJobToolCustom:
-    def test_create_smartscraper_job(self):
-        """Test creating a SmartScraper scheduled job."""
-        with patch("langchain_scrapegraph.tools.scheduled_jobs.Client", MockClient):
-            tool = MockCreateScheduledJobTool(api_key="sgai-test-api-key")
+class TestCrawlStartToolCustom:
+    def test_invoke_basic(self):
+        with patch("langchain_scrapegraph.tools.crawl.ScrapeGraphAI", MockClient):
+            tool = MockCrawlStartTool(api_key="sgai-test-api-key")
             result = tool.invoke(
-                {
-                    "job_name": "Daily Scraping Job",
-                    "service_type": "smartscraper",
-                    "cron_expression": "0 9 * * *",
-                    "job_config": {
-                        "website_url": "https://example.com",
-                        "user_prompt": "Extract the main heading",
-                    },
-                    "is_active": True,
-                }
+                {"url": "https://example.com", "max_depth": 3, "max_pages": 5}
             )
             assert isinstance(result, dict)
-            assert result["job_name"] == "Daily Scraping Job"
-            assert result["service_type"] == "smartscraper"
-            assert result["is_active"] is True
             assert "id" in result
-
-    def test_create_searchscraper_job(self):
-        """Test creating a SearchScraper scheduled job."""
-        with patch("langchain_scrapegraph.tools.scheduled_jobs.Client", MockClient):
-            tool = MockCreateScheduledJobTool(api_key="sgai-test-api-key")
-            result = tool.invoke(
-                {
-                    "job_name": "Weekly Search Job",
-                    "service_type": "searchscraper",
-                    "cron_expression": "0 10 * * 1",
-                    "job_config": {
-                        "user_prompt": "Find latest AI news",
-                        "num_results": 5,
-                    },
-                    "is_active": True,
-                }
-            )
-            assert isinstance(result, dict)
-            assert result["job_name"] == "Weekly Search Job"
-            assert result["service_type"] == "searchscraper"
+            assert result["status"] == "running"
 
 
-class TestGetScheduledJobsToolUnit(ToolsUnitTests):
+class TestMonitorCreateToolUnit(ToolsUnitTests):
     @property
-    def tool_constructor(self) -> Type[GetScheduledJobsTool]:
-        return MockGetScheduledJobsTool
+    def tool_constructor(self) -> Type[MonitorCreateTool]:
+        return MockMonitorCreateTool
 
     @property
     def tool_constructor_params(self) -> dict:
-        with patch("langchain_scrapegraph.tools.scheduled_jobs.Client", MockClient):
+        with patch("langchain_scrapegraph.tools.monitor.ScrapeGraphAI", MockClient):
             return {"api_key": "sgai-test-api-key"}
 
     @property
     def tool_invoke_params_example(self) -> dict:
-        return {"page": 1, "page_size": 10}
+        return {
+            "url": "https://example.com",
+            "interval": "0 9 * * *",
+            "name": "Test Monitor",
+        }
 
 
-class TestGetScheduledJobsToolCustom:
-    def test_get_jobs_with_filters(self):
-        """Test getting scheduled jobs with filters."""
-        with patch("langchain_scrapegraph.tools.scheduled_jobs.Client", MockClient):
-            tool = MockGetScheduledJobsTool(api_key="sgai-test-api-key")
+class TestMonitorCreateToolCustom:
+    def test_create_monitor(self):
+        with patch("langchain_scrapegraph.tools.monitor.ScrapeGraphAI", MockClient):
+            tool = MockMonitorCreateTool(api_key="sgai-test-api-key")
             result = tool.invoke(
                 {
-                    "page": 1,
-                    "page_size": 10,
-                    "service_type": "smartscraper",
-                    "is_active": True,
+                    "name": "Price Monitor",
+                    "url": "https://example.com",
+                    "interval": "1h",
                 }
             )
             assert isinstance(result, dict)
-            assert "jobs" in result
-            assert "total" in result
-            assert isinstance(result["jobs"], list)
+            assert "id" in result
+            assert result["status"] == "active"
